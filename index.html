@@ -1003,7 +1003,7 @@ const setSes=u=>localStorage.setItem(SES_KEY,JSON.stringify({u,exp:Date.now()+12
 const QS=["Siapa nama ibu kandung Anda?","Apa nama hewan peliharaan pertama Anda?","Di kota mana Anda dilahirkan?","Apa nama sekolah dasar Anda?","Apa makanan favorit Anda sewaktu kecil?"];
 const LG={n:0,until:0};let PEND=null,FPU=null;
 const msg=(t,c)=>t?`<div class="amsg ${c||"err"}">${t}</div>`:"";
-const abox=(inner,w)=>`<div class=alogin><div class="abox ${w||""}"><div class=ah><img src="${LOGO}" alt="Logo"><div><b>Kertas Kerja Pengadaan</b><small>BPBJ Kota Surakarta</small></div></div>${inner}</div></div>`;
+const abox=(inner,w)=>`<div class=alogin><div class="abox ${w||""}"><div class=ah><img src="${LOGO}" alt="Logo"><div><b>Kertas Kerja Pengadaan</b><small>BPBJ Kota Surakarta</small></div></div>${inner}<div style="text-align:center;font-size:11px;color:var(--mu);padding:0 0 12px">Versi 4.1 · Dashboard Proyek</div></div></div>`;
 function showAuth(v,m,c){document.body.classList.add("noapp");const a=$("#auth");a.classList.add("on");let h="";
  if(v=="login")h=abox(`<form onsubmit="return doLogin(event)"><label>Username</label><input id=l_u autocomplete=username autofocus><label>Password</label><input id=l_p type=password autocomplete=current-password><label style="display:flex;gap:6px;align-items:center;margin-top:8px"><input type=checkbox style="width:auto" onchange="l_p.type=this.checked?'text':'password'"> Tampilkan password</label>${msg(m,c)}<button class=btn>Masuk</button><div class=lnk><a onclick="showAuth('forgot')">Lupa password?</a><a onclick="showAuth('reg')">Daftar akun baru</a></div></form>`);
  else if(v=="reg")h=abox(`<form onsubmit="return doReg(event)"><label>Nama lengkap *</label><input id=r_nama><div class=grid style="grid-template-columns:1fr 1fr;gap:8px"><div><label>NIP</label><input id=r_nip></div><div><label>No. HP</label><input id=r_hp></div></div><label>Instansi / Jabatan *</label><input id=r_inst placeholder="mis. Pokja Pemilihan BPBJ"><label>Email *</label><input id=r_email type=email><label>Username * <small>(huruf kecil, angka, _ atau . — min. 4)</small></label><input id=r_user autocomplete=username><div class=grid style="grid-template-columns:1fr 1fr;gap:8px"><div><label>Password * <small>(min. 8, huruf+angka)</small></label><input id=r_pw type=password autocomplete=new-password></div><div><label>Ulangi password *</label><input id=r_pw2 type=password autocomplete=new-password></div></div>${AUTH?"":`<label>Pertanyaan keamanan (untuk lupa password) *</label><select id=r_q>${QS.map(q=>`<option>${q}</option>`).join("")}</select><label>Jawaban *</label><input id=r_a>`}${msg(m,c)}<button class=btn>Kirim Pengajuan Akun</button><div class=lnk><a onclick="showAuth('login')">← Kembali ke login</a></div><p class=badge style="margin-top:8px">Akun baru harus disetujui administrator sebelum dapat dipakai.</p></form>`,"wide");
@@ -1163,7 +1163,7 @@ function dashDraw(){
  const a=$("#auth"),all=PROJ,pl=all.filter(p=>p.type=="PL").length,tn=all.length-pl,hps=all.reduce((s,p)=>s+(p.hps||0),0),wk=all.filter(p=>Date.now()-p.updated<7*864e5).length;
  const avg=all.length?Math.round(all.reduce((s,p)=>s+(p.done||0),0)/all.length):0,top=[...all].sort((x,y)=>y.hps-x.hps).slice(0,5),mx=top[0]?top[0].hps||1:1;
  a.innerHTML=`<div class=dwrap>
-<div class=dtop><img src="${LOGO}" alt="Logo"><div><b>Dashboard Proyek</b><small>Kertas Kerja Pengadaan · BPBJ Kota Surakarta</small></div><span class=sp></span>
+<div class=dtop><img src="${LOGO}" alt="Logo"><div><b>Dashboard Proyek</b><small>Kertas Kerja Pengadaan · BPBJ Kota Surakarta · v4</small></div><span class=sp></span>
 <button class="btn o" onclick="openShell('akun')">👤 ${E(CURU.u)}</button>${isAdmin()?`<button class="btn o" onclick="openShell('admin')">🛡 Admin</button>`:""}<button class="btn o" onclick="logout()">Keluar</button></div>
 <div class=dstats><div class=st><small>Total Proyek</small><b>${all.length}</b></div><div class=st><small>Pengadaan Langsung</small><b>${pl}</b></div><div class=st><small>Tender</small><b>${tn}</b></div><div class=st><small>Total Nilai HPS</small><b style="font-size:17px">${rpS(hps)}</b></div><div class=st><small>Diubah 7 hari terakhir</small><b>${wk}</b></div><div class=st><small>Rata-rata kelengkapan data</small><b>${avg}%</b></div></div>
 ${top.length?`<div class=dpanel><h3>Nilai HPS — 5 proyek terbesar</h3>${top.map(p=>`<div class=hb><span title="${E(p.name)}">${E(p.name)}</span><div><i class="${p.type}" style="width:${Math.max(2,(p.hps||0)/mx*100)}%"></i></div><em>${rpS(p.hps)}</em></div>`).join("")}</div>`:""}
@@ -1206,7 +1206,7 @@ async function delProj(id){const m=PROJ.find(p=>p.id==id);if(!m||!confirm('Hapus
      usernames/{username}             {email, uid} untuk login dengan username
    ===================================================================== */
 let AUTH=null,REGBUSY=false;
-const ADMIN_USER="febrian_admin",ADMIN_EMAIL=ADMIN_USER+"@kertaskerja.app";
+const ADMIN_USER="febrian_admin",ADMIN_EMAIL="febrian.dian.p@gmail.com";
 const DOCREF=()=>AUTH?db.collection("users").doc(CURU.uid).collection(COLL()).doc(pid):db.collection(COLL()).doc(pid);
 function fbErr(e){const c=(e&&e.code)||"";
  if(/invalid-credential|user-not-found|wrong-password|invalid-login/.test(c))return"Username/email atau password salah.";
@@ -1236,6 +1236,7 @@ const FB={
   const er=m=>(showAuth("reg",m),false);
   if(!nama||!inst||!email)return er("Lengkapi semua kolom bertanda *.");
   if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email))return er("Format email tidak valid.");
+  if(email==ADMIN_EMAIL)return er("Email ini dicadangkan untuk administrator.");
   if(!/^[a-z0-9_.]{4,30}$/.test(id)||id==ADMIN_USER)return er("Username hanya huruf kecil, angka, _ dan . (4–30 karakter) dan tidak boleh sama dengan akun admin.");
   if(!pwOK(pw))return er("Password minimal 8 karakter dan mengandung huruf serta angka.");
   if(pw!=pw2)return er("Ulangi password tidak sama.");
@@ -1248,8 +1249,8 @@ const FB={
   catch(x){showAuth("reg",fbErr(x))}finally{REGBUSY=false}
   return false},
  async forgot1(e){e.preventDefault();const raw=gv("f_u");
-  try{const email=await fbEmail(raw);if(email&&email!=ADMIN_EMAIL)await AUTH.sendPasswordResetEmail(email);
-   showAuth("login",email==ADMIN_EMAIL?"Reset password akun admin dilakukan lewat Firebase Console (Authentication).":"Jika akun terdaftar, tautan reset password telah dikirim ke email Anda. Periksa juga folder spam.","inf")}
+  try{const email=await fbEmail(raw);if(email)await AUTH.sendPasswordResetEmail(email);
+   showAuth("login","Jika akun terdaftar, tautan reset password telah dikirim ke email Anda. Periksa juga folder spam.","inf")}
   catch(x){showAuth("forgot",fbErr(x))}return false},
  async ensureMeta(){try{const r=db.collection("meta").doc("app");if(!(await r.get()).exists)await r.set({schemaVersion:2,app:"kertas-kerja",createdAt:Date.now(),createdBy:CURU.u})}catch(e){console.warn("meta",e)}},
  async setupRun(){const box=document.getElementById("setupBox"),out=[];box.textContent="Memeriksa…";
