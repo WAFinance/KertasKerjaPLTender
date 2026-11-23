@@ -1313,22 +1313,16 @@ function enterApp(){document.body.classList.remove("noapp");const a=$("#auth");a
 async function openProject(id){const m=PROJ.find(p=>p.id==id);if(!m)return;applyMode(m.type);pid=id;S=freshS(PROF());INPROJ=true;enterApp();await load()}
 function openShell(t){applyMode(localStorage.getItem("kk_mode")||"PL");INPROJ=false;enterApp();go(t)}
 async function toDash(){await saveNow();INPROJ=false;showDash()}
-let NP={step:1,type:"",jenis:""};
-const NPT={PL:["Pejabat Pengadaan","Pengadaan Langsung","📄"],TN:["Pokja Pemilihan","Tender","🏗️"]};
-function dashNew(){NP={step:1,type:"",jenis:""};let d=document.getElementById("dmodal");if(d)d.remove();d=document.createElement("div");d.className="dmodal";d.id="dmodal";document.body.appendChild(d);npDraw()}
-function npDraw(){const d=document.getElementById("dmodal");if(!d)return;
- const crumb=`<div class=npsteps>${["Pelaksana","Jenis Pengadaan","Nama Paket"].map((t,i)=>`<span class="${NP.step==i+1?"on":NP.step>i+1?"done":""}"><b>${NP.step>i+1?"✓":i+1}</b> ${t}</span>`).join("")}</div>`;
- const sum=(NP.type?`<span class="tag ${NP.type=="TN"?"tn":""}">${NPT[NP.type][0]}</span> `:"")+(NP.jenis?`<span class="tag jn">${NP.jenis}</span> <small>${E(JENIS[NP.jenis])}</small>`:"");
- let body="";
- if(NP.step==1)body=`<p class=badge style="margin:0 0 10px">Siapa pelaksana pemilihan penyedia pada proyek ini?</p><div class=mcards style="padding:0">${["PL","TN"].map(t=>`<button class=mcard onclick="npPick('type','${t}')"><div class=ic>${NPT[t][2]}</div><b>${NPT[t][0]}</b><small>${t=="PL"?"Pengadaan Langsung — dokumen dibuat dan ditandatangani oleh Pejabat Pengadaan.":"Tender — dokumen dibuat dan ditandatangani oleh Pokja Pemilihan."}</small></button>`).join("")}</div>`;
- else if(NP.step==2)body=`<p class=badge style="margin:0 0 10px">Pilih jenis pengadaan. Pilihan ini menentukan template Lampiran Reviu, kualifikasi, dan kode di nomor surat.</p><div class=jgrid>${JNORD.map(j=>`<button class=jcard onclick="npPick('jenis','${j}')"><span class="tag jn">${j}</span><b>${E(JENIS[j])}</b></button>`).join("")}</div><div style="margin-top:14px"><button class="btn o" onclick="npBack()">← Kembali</button></div>`;
- else body=`<div style="margin-bottom:8px">${sum}</div><label>Nama paket pekerjaan</label><input id=np_n placeholder="mis. Rehabilitasi Jalan …" onkeydown="if(event.key=='Enter')createProject()"><div id=np_m></div><div style="display:flex;gap:8px;margin-top:16px"><button class="btn o" onclick="npBack()">← Kembali</button><button class=btn onclick="createProject()">Buat &amp; Buka</button></div><p class=badge style="margin-top:10px">Proyek baru memakai data bawaan sebagai contoh isian — ubah di tab Bank Data.</p>`;
- d.innerHTML=`<div class=dbox style="max-width:560px"><div style="display:flex;justify-content:space-between;align-items:center"><h3 style="margin:0">Proyek Baru</h3><button class="btn o" style="padding:3px 10px" onclick="document.getElementById('dmodal').remove()">✕</button></div>${crumb}${body}</div>`;
- const n=document.getElementById("np_n");if(n)setTimeout(()=>n.focus(),30)}
-function npPick(k,v){NP[k]=v;NP.step=k=="type"?2:3;npDraw()}
-function npBack(){NP.step=Math.max(1,NP.step-1);npDraw()}
-async function createProject(){const type=NP.type,name=gv("np_n");if(!type||!NP.jenis)return;if(!name)return document.getElementById("np_m").innerHTML=msg("Nama paket wajib diisi.");
- applyMode(type);pid="p"+Date.now().toString(36);S=freshS(PROF());S.b.paket=name;S.b.jenis=NP.jenis;if(type=="TN")S.b.kegiatan=name;
+function dashNew(){let d=document.getElementById("dmodal");if(d)d.remove();d=document.createElement("div");d.className="dmodal";d.id="dmodal";
+ d.innerHTML=`<div class=dbox><h3>Proyek Baru</h3>
+<label>Pelaksana</label><select id=np_t><option value=PL>Pejabat Pengadaan (Pengadaan Langsung)</option><option value=TN>Pokja Pemilihan (Tender)</option></select>
+<label>Jenis Pengadaan</label><select id=np_j>${JNORD.map(j=>`<option value=${j}>${j} — ${JENIS[j]}</option>`).join("")}</select>
+<label>Nama paket pekerjaan</label><input id=np_n placeholder="mis. Rehabilitasi Jalan …" onkeydown="if(event.key=='Enter')createProject()"><div id=np_m></div>
+<div style="display:flex;gap:8px;margin-top:16px"><button class=btn onclick="createProject()">Buat &amp; Buka</button><button class="btn o" onclick="document.getElementById('dmodal').remove()">Batal</button></div>
+<p class=badge style="margin-top:10px">Proyek baru memakai data bawaan sebagai contoh isian — ubah di tab Bank Data.</p></div>`;
+ document.body.appendChild(d);setTimeout(()=>document.getElementById("np_n").focus(),30)}
+async function createProject(){const type=gv("np_t"),name=gv("np_n");if(!name)return document.getElementById("np_m").innerHTML=msg("Nama paket wajib diisi.");
+ applyMode(type);pid="p"+Date.now().toString(36);S=freshS(PROF());S.b.paket=name;S.b.jenis=gv("np_j")||"PK";if(type=="TN")S.b.kegiatan=name;
  INPROJ=true;await saveNow({created:Date.now()});document.getElementById("dmodal").remove();enterApp();tab="bank";render()}
 async function dupProj(id){const m=PROJ.find(p=>p.id==id);if(!m)return;applyMode(m.type);pid=id;S=freshS(PROF());await loadData();
  pid="p"+Date.now().toString(36);S.b.paket=(S.b.paket||m.name)+" (Salinan)";INPROJ=true;await saveNow({created:Date.now()});INPROJ=false;showDash()}
