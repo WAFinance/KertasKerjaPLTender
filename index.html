@@ -196,6 +196,17 @@ body.noapp #top,body.noapp #wrap{display:none}
 .jcard{display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:left;border:2px solid var(--bd);background:var(--in);color:var(--tx);border-radius:10px;padding:12px 14px;cursor:pointer;font:inherit}
 .jcard:hover{border-color:var(--ac);background:var(--acs)}.jcard b{font-size:13.5px}
 @media(max-width:520px){.jgrid{grid-template-columns:1fr}}
+
+.seg{display:inline-flex;border:1px solid var(--bd);border-radius:8px;overflow:hidden;background:var(--sf)}
+.seg button{border:0;background:transparent;color:var(--tx);padding:7px 12px;cursor:pointer;font:inherit;font-size:12.5px}
+.seg button.on{background:var(--ac);color:#fff}
+.lwrap{overflow-x:auto;background:var(--sf);border:1px solid var(--bd);border-radius:10px}
+.ltab{width:100%;border-collapse:collapse;font-size:13px}.ltab th{position:sticky;top:0;text-align:left;background:var(--in);padding:9px 10px;border-bottom:1px solid var(--bd);white-space:nowrap}
+.ltab td{padding:9px 10px;border-bottom:1px solid var(--bd);vertical-align:middle}.ltab tr:hover td{background:var(--acs)}
+.ltab .btn{padding:5px 10px;font-size:12px}.ltab .bar{margin:0 0 2px}
+.ltab tr.jhr td{background:var(--in);font-size:13px}.ltab tr.jhr em{font-style:normal;color:var(--mu)}
+.plink{color:var(--ac);font-weight:600;cursor:pointer}.plink:hover{text-decoration:underline}
+.ltab .pm{color:var(--mu);font-size:12px}.ltab .tag{white-space:nowrap}
 </style></head><body class="noapp">
 <header id="top"></header>
 <div id="wrap"><nav id="side"></nav><main id="main"></main></div>
@@ -977,56 +988,92 @@ function parseTSV(t){ /* tab-delimited dengan dukungan sel bertanda kutip (hasil
  return rows}
 const isNumS=s=>s!==""&&/^-?(rp\.?)?[\d.,]+%?$/i.test(s.replace(/[\s\u00a0]/g,""));
 const pjS=x=>{if(x===""||x==null)return .11;const v=pn(x);return /%/.test(x)?v/100:(v>1?v/100:v)};
-function tsvPrep(text){ /* rapikan: buang baris kosong & kolom kosong (sel gabungan Excel), pastikan ada kolom No */
- let rows=parseTSV(text).filter(r=>r.some(c=>c!==""));if(!rows.length)return null;
- const w=Math.max(...rows.map(r=>r.length));rows=rows.map(r=>r.concat(Array(w-r.length).fill("")));
- const keep=[...Array(w).keys()].filter(c=>rows.some(r=>r[c]!==""));rows=rows.map(r=>keep.map(c=>r[c]));
- const noLike=r=>/^([IVXLC]+|[A-Z]|\d+)[.)]?$/i.test(r[0]);
- if(rows.filter(noLike).length<rows.length*.4)rows=rows.map(r=>[""].concat(r));
- return rows}
-const isTotRow=(no,u)=>/^(jumlah|total|ppn|rekap|pembulatan|dibulatkan|terbilang|sub\s?total)/i.test(u)||/^(jumlah|total)/i.test(no);
-const isHdrRow=(no,u)=>/^no\.?$/i.test(no)||/^uraian/i.test(u);
+const noLikeS=s=>/^([IVXLC]+|[A-Z]|\d+(\.\d+)*)[.)]?$/i.test(s)&&s.length<=7;
+const isRomanS=s=>/^[IVXLC]+\.?$/i.test(s);
+const isTotRow=(no,u)=>/^(jumlah|total|ppn|rekap|pembulatan|dibulatkan|terbilang|sub\s?total|grand)/i.test(u)||/^(jumlah|total)/i.test(no);
+const isHdrRow=(no,u)=>/^no\.?$/i.test(no)||/^(no\.?\s*)?(mata\s*pembayaran\s*)?uraian/i.test(u)||/^no\.?(\s|$)/i.test(u);
+const fm=n=>Number(n||0).toLocaleString("id-ID",{minimumFractionDigits:2,maximumFractionDigits:2});
 
-/* posisi kolom Vol/Qty = kolom angka yang diikuti satuan (teks) pada baris pekerjaan */
-function volIdx(rows){const c={};rows.forEach(r=>{if(!r[1])return;for(let i=2;i<r.length-1;i++){if(isNumS(r[i])){if(r[i+1]!==""&&!isNumS(r[i+1]))c[i]=(c[i]||0)+1;break}}});
+/* baca baris mentah (kolom TIDAK dibuang, agar posisi kolom sesuai Excel) */
+function rawRows(text){let rows=parseTSV(text).filter(r=>r.some(c=>c!==""));if(!rows.length)return null;const w=Math.max(...rows.map(r=>r.length));return rows.map(r=>r.concat(Array(w-r.length).fill("")))}
+/* kolom Vol/Qty: angka pertama setelah sel teks pertama (No boleh angka), dipilih yang paling sering */
+function volIdx(rows){const c={};rows.forEach(r=>{let t=-1;for(let i=0;i<r.length;i++){if(r[i]!==""&&!isNumS(r[i])&&!/^([IVXLC]+|[A-Z])\.?$/i.test(r[i])){t=i;break}}
+  if(t<0)return;for(let i=t+1;i<r.length;i++){if(r[i]==="")continue;if(isNumS(r[i])){c[i]=(c[i]||0)+1}break}});
  const k=Object.keys(c).sort((x,y)=>c[y]-c[x])[0];return k===undefined?-1:+k}
-const rowEmptyFrom=(r,i)=>r.slice(i).every(c=>c==="");
-function parseNegoPaste(text,fillN){
- const rows=tsvPrep(text);if(!rows)return{err:"Belum ada data."};
- const vi=volIdx(rows);if(vi<0)return{err:"Kolom Vol. dan Sat. tidak ditemukan. Pastikan blok yang disalin memuat kolom Vol. (angka) diikuti Sat. (teks)."};
- const rem=rows[0].length-vi;let L;
- if(rem>=11)L={h:vi+2,hp:vi+3,p:vi+5,pp:vi+6,n:vi+8,np:vi+9};else if(rem>=8)L={h:vi+2,hp:vi+3,p:vi+4,pp:vi+5,n:vi+6,np:vi+7};
- else return{err:`Kolom setelah Vol. hanya ${rem}. Salin sampai Harga Negosiasi (Vol, Sat, lalu 3 kelompok Harga Satuan/Pajak/Jumlah).`};
- const out=[],warn=[];let cur=null;
- rows.forEach((r,ri)=>{const no=r[0],u=r[1];
-  if(isTotRow(no,u)||isHdrRow(no,u))return;
-  if(u&&/^[IVXLC]+\.?$/i.test(no)&&!r[vi+1])out.push(cur={t:u,items:[]});
-  else if(u&&isNumS(r[vi])){
-   if(!cur){cur={t:"PEKERJAAN",items:[]};out.push(cur)}
-   const it={u,v:pn(r[vi]),s:r[vi+1],h:pn(r[L.h]),hp:pjS(r[L.hp]),p:pn(r[L.p]),pp:pjS(r[L.pp]),n:pn(r[L.n]),np:pjS(r[L.np])};
-   if(fillN&&!it.n&&it.p){it.n=it.p;it.np=it.pp}
-   cur.items.push(it)}
-  else if(u&&(/^[IVXLC]+\.?$/i.test(no)||(no===""&&rowEmptyFrom(r,2))))out.push(cur={t:u,items:[]});
-  else if(u&&no!==""){warn.push(`Baris ${ri+1} dilewati: "${(no+" "+u).trim().slice(0,50)}"`)}});
- const data=out.filter(x=>x.items.length);
- if(!data.length)return{err:"Tidak ada baris pekerjaan yang terbaca."};
- return{data,nSec:data.length,nItem:data.reduce((a,x)=>a+x.items.length,0),warn}}
+/* kolom dari judul header Excel: Harga Satuan / Pajak / Jumlah (urut = HPS, Penawaran, Negosiasi) */
+function headerCols(rows,vi){const H={h:[],pj:[],jm:[],persen:-1};
+ for(const r of rows.slice(0,10)){if(r.filter(isNumS).length>=4)continue;
+  r.forEach((c,i)=>{const t=c.toLowerCase();if(/harga\s*satuan/.test(t))H.h.push(i);else if(/^(pajak|ppn)/.test(t))H.pj.push(i);else if(/^jumlah/.test(t))H.jm.push(i);else if(/^persen/.test(t))H.persen=i})}
+ const u=a=>[...new Set(a)].sort((x,y)=>x-y);H.h=u(H.h).filter(i=>i>vi);H.pj=u(H.pj).filter(i=>i>vi);H.jm=u(H.jm).filter(i=>i>vi);return H}
+function leftParts(r,vi){const L=r.slice(0,vi).filter(x=>x!=="");let no="",u="";
+ if(L.length>=2){if(noLikeS(L[0])){no=L[0];u=L.slice(1).join(" ")}else u=L.join(" ")}
+ else if(L.length==1){if(noLikeS(L[0])&&!/[a-z]{3,}/i.test(L[0]))no=L[0];else u=L[0]}
+ return{no,u}}
+const allCaps=u=>u===u.toUpperCase()&&/[A-Z]/.test(u);
+/* hitung ulang harga satuan dari kolom Jumlah (Excel menampilkan angka dibulatkan, Jumlah lebih presisi) */
+function fixPrice(v,h,pj,J){if(!(v>0)||!(J>0))return{h,adj:false,bad:false};const calc=v*h*(1+pj),d=Math.abs(J-calc);
+ if(d<=0.011)return{h,adj:false,bad:false};if(d/J>0.01)return{h,adj:false,bad:true};return{h:J/(v*(1+pj)),adj:true,bad:false}}
 
-function parseTimPaste(text){
- const rows=tsvPrep(text);if(!rows)return{err:"Belum ada data."};
- const vi=volIdx(rows);if(vi<0)return{err:"Kolom Kuantitas dan Sat. tidak ditemukan. Pastikan blok yang disalin memuat kolom Kuantitas (angka) diikuti Sat. (teks)."};
- const rem=rows[0].length-vi;let L;
- if(rem>=5)L={h:vi+2,p:vi+4,ket:rem>=8?vi+7:-1};else if(rem==4)L={h:vi+2,p:vi+3,ket:-1};
- else return{err:`Kolom setelah Kuantitas hanya ${rem}. Salin sampai Harga Penawaran.`};
- const out=[],warn=[];
- rows.forEach((r,ri)=>{const no=r[0],u=r[1];
-  if(isTotRow(no,u)||isHdrRow(no,u)||/^no\.?\s*mata/i.test(no))return;
-  if(u&&/^([IVXLC]+|[A-Z])\.?$/i.test(no)&&!r[vi+1])out.push({k:"sec",n:no,t:u});
-  else if(u&&isNumS(r[vi]))out.push({k:"it",n:no,u,v:pn(r[vi]),s:r[vi+1],h:pn(r[L.h]),p:pn(r[L.p]),ket:L.ket>=0&&r[L.ket]&&!isNumS(r[L.ket])?r[L.ket]:""});
-  else if(u&&rowEmptyFrom(r,vi))out.push({k:"sec",n:no,t:u});
-  else if(u&&no!=="")warn.push(`Baris ${ri+1} dilewati: "${(no+" "+u).trim().slice(0,50)}"`)});
- const nItem=out.filter(x=>x.k=="it").length;if(!nItem)return{err:"Tidak ada baris pekerjaan yang terbaca."};
- return{data:out,nSec:out.filter(x=>x.k=="sec").length,nItem,warn}}
+function parseNegoPaste(text,opt){opt=opt||{};
+ const rows=rawRows(text);if(!rows)return{err:"Belum ada data."};
+ const vi=volIdx(rows);if(vi<0)return{err:"Kolom Vol. tidak ditemukan. Pastikan blok yang disalin memuat kolom Vol. (angka) dan Uraian."};
+ const H=headerCols(rows,vi),w=rows[0].length;let G;
+ if(H.h.length>=3&&H.pj.length>=3)G=[0,1,2].map(g=>({h:H.h[g],pj:H.pj[g],jm:H.jm[g]??-1}));
+ else if(w>=vi+11)G=[{h:vi+2,pj:vi+3,jm:vi+4},{h:vi+5,pj:vi+6,jm:vi+7},{h:vi+8,pj:vi+9,jm:vi+10}];
+ else if(w>=vi+8)G=[{h:vi+2,pj:vi+3,jm:-1},{h:vi+4,pj:vi+5,jm:-1},{h:vi+6,pj:vi+7,jm:-1}];
+ else return{err:`Kolom setelah Vol. kurang (${w-vi-1}). Salin sampai Jumlah Harga Negosiasi (Vol, Sat, lalu 3 kelompok Harga Satuan/Pajak/Jumlah).`};
+ const out=[],skipped=[],tot={rows:0,hdr:0};let cur=null,prev=null,adj=0,bad=0,merged=0,lastGood=-1,done=false;const xl=[[],[],[]];
+ rows.forEach((r,ri)=>{const{no,u}=leftParts(r,vi),lab=(no+" "+u).trim();
+  if(done)return;
+  if((cur&&isHdrRow(no,u))||/rekapitulasi/i.test(r.join(" "))){if(cur&&cur.items.length||/rekapitulasi/i.test(r.join(" "))){done=true;return}}
+  if(isHdrRow(no,u)){tot.hdr++;return}
+  if(isTotRow(no,u)||(!u&&/(jumlah|total)/i.test(r.join(" "))&&r.some(isNumS))){lastGood=ri;tot.rows++;G.forEach((g,gi)=>{if(g.jm>=0&&isNumS(r[g.jm]))xl[gi].push(pn(r[g.jm]))});return}
+  if(!lab&&r.every(c=>c===""||isNumS(c))&&!u){if(cur&&G.some(g=>g.jm>=0&&isNumS(r[g.jm]))){lastGood=ri;G.forEach((g,gi)=>{if(g.jm>=0&&isNumS(r[g.jm]))xl[gi].push(pn(r[g.jm]))});return}if(r.some(c=>c!==""))skipped.push({row:ri+1,t:r.filter(Boolean).join(" | ").slice(0,60),why:"angka tanpa uraian"});return}
+  const sat=r[vi+1],itemLike=u&&isNumS(r[vi])&&!(isRomanS(no)&&!sat)&&(sat!==""||/^\d/.test(no)||G.some(g=>isNumS(r[g.h])));
+  if(itemLike){
+   lastGood=ri;if(!cur){cur={t:"PEKERJAAN",items:[]};out.push(cur)}
+   const v=pn(r[vi]),it={u,v,s:sat,h:[0,0,0],pj:[0,0,0]};
+   G.forEach((g,gi)=>{const pj=pjS(r[g.pj]);let h=pn(r[g.h]);
+    if(opt.adjust&&g.jm>=0&&isNumS(r[g.jm])){const f=fixPrice(v,h,pj,pn(r[g.jm]));h=f.h;if(f.adj)adj++;if(f.bad){bad++;skipped.push({row:ri+1,t:lab.slice(0,50),why:`Jumlah kelompok ${gi+1} tidak cocok dengan Vol×Harga (kolom mungkin bergeser)`,soft:1})}}
+    it.h[gi]=h;it.pj[gi]=pj});
+   if(opt.fillN&&!it.h[2]&&it.h[1]){it.h[2]=it.h[1];it.pj[2]=it.pj[1]}
+   cur.items.push(prev={u:it.u,v:it.v,s:it.s,h:it.h[0],hp:it.pj[0],p:it.h[1],pp:it.pj[1],n:it.h[2],np:it.pj[2]})}
+  else if(u&&(isRomanS(no)||(/^[A-Z]\.?$/i.test(no))||(no===""&&allCaps(u))||rowEmptyFrom(r,vi)&&no!==""))out.push(cur={t:u,items:[]}),prev=null;
+  else if(u&&no===""&&rowEmptyFrom(r,vi)&&prev){prev.u+=" "+u;merged++}
+  else if(u||no)skipped.push({row:ri+1,t:lab.slice(0,50),why:"bukan baris pekerjaan/bagian"})});
+ const data=out.filter(x=>x.items.length);
+ if(!data.length)return{err:"Tidak ada baris pekerjaan yang terbaca (kolom Vol. harus berisi angka)."};
+ const sum=[0,0,0];data.forEach(sc=>sc.items.forEach(i=>{sum[0]+=i.v*i.h*(1+i.hp);sum[1]+=i.v*i.p*(1+i.pp);sum[2]+=i.v*i.n*(1+i.np)}));
+ return{data,sum,xl,adj,bad,merged,tot,skipped:skipped.filter(x=>x.row-1<=lastGood),nSec:data.length,nItem:data.reduce((a,x)=>a+x.items.length,0)}}
+
+function parseTimPaste(text,opt){opt=opt||{};
+ const rows=rawRows(text);if(!rows)return{err:"Belum ada data."};
+ const vi=volIdx(rows);if(vi<0)return{err:"Kolom Kuantitas tidak ditemukan. Pastikan blok yang disalin memuat kolom Kuantitas (angka) dan Uraian."};
+ const H=headerCols(rows,vi),w=rows[0].length;let G;
+ if(H.h.length>=2)G={h:H.h[0],jh:H.jm[0]??-1,p:H.h[1],jp:H.jm[1]??-1,ket:H.persen>=0?H.persen+1:-1};
+ else if(w>=vi+7)G={h:vi+2,jh:vi+3,p:vi+4,jp:vi+5,ket:w>=vi+8?vi+7:-1};
+ else if(w>=vi+5)G={h:vi+2,jh:vi+3,p:vi+4,jp:-1,ket:-1};
+ else if(w>=vi+4)G={h:vi+2,jh:-1,p:vi+3,jp:-1,ket:-1};
+ else return{err:`Kolom setelah Kuantitas kurang (${w-vi-1}). Salin sampai Harga Penawaran.`};
+ const out=[],skipped=[],xl=[[],[]];let adj=0,bad=0,prev=null,merged=0,lastGood=-1,done=false;
+ rows.forEach((r,ri)=>{const{no,u}=leftParts(r,vi),lab=(no+" "+u).trim();
+  if(done)return;
+  if(isHdrRow(no,u)){if(out.some(x=>x.k=="it"))done=true;return}
+  if(isTotRow(no,u)||(!u&&/(jumlah|total)/i.test(r.join(" "))&&r.some(isNumS))){lastGood=ri;if(G.jh>=0&&isNumS(r[G.jh]))xl[0].push(pn(r[G.jh]));if(G.jp>=0&&isNumS(r[G.jp]))xl[1].push(pn(r[G.jp]));return}
+  if(!u&&r.every(c=>c===""||isNumS(c))){if(out.length&&((G.jh>=0&&isNumS(r[G.jh]))||(G.jp>=0&&isNumS(r[G.jp])))){lastGood=ri;if(G.jh>=0&&isNumS(r[G.jh]))xl[0].push(pn(r[G.jh]));if(G.jp>=0&&isNumS(r[G.jp]))xl[1].push(pn(r[G.jp]));return}if(r.some(c=>c!==""))skipped.push({row:ri+1,t:r.filter(Boolean).join(" | ").slice(0,60),why:"angka tanpa uraian"});return}
+  const sat=r[vi+1];
+  if(u&&isNumS(r[vi])&&!(isRomanS(no)&&!sat)&&(sat!==""||/^\d/.test(no)||isNumS(r[G.h]))){
+   lastGood=ri;const v=pn(r[vi]);let h=pn(r[G.h]),p=pn(r[G.p]);
+   if(opt.adjust&&v>0){if(G.jh>=0&&isNumS(r[G.jh])){const J=pn(r[G.jh]);if(J>0&&Math.abs(J-v*h)>0.011){if(Math.abs(J-v*h)/J<.01){h=J/v;adj++}else{bad++;skipped.push({row:ri+1,t:lab.slice(0,50),why:"Jumlah HPS tidak cocok dengan Qty×Harga",soft:1})}}}
+    if(G.jp>=0&&isNumS(r[G.jp])){const J=pn(r[G.jp]);if(J>0&&Math.abs(J-v*p)>0.011){if(Math.abs(J-v*p)/J<.01){p=J/v;adj++}else{bad++;skipped.push({row:ri+1,t:lab.slice(0,50),why:"Jumlah Penawaran tidak cocok dengan Qty×Harga",soft:1})}}}}
+   out.push(prev={k:"it",n:no,u,v,s:sat,h,p,ket:G.ket>=0&&r[G.ket]&&!isNumS(r[G.ket])?r[G.ket]:""})}
+  else if(u&&(isRomanS(no)||/^[A-Z]\.?$/i.test(no)||(no===""&&allCaps(u))||(no!==""&&rowEmptyFrom(r,vi))))out.push({k:"sec",n:no,t:u}),prev=null;
+  else if(u&&no===""&&rowEmptyFrom(r,vi)&&prev){prev.u+=" "+u;merged++}
+  else if(u||no)skipped.push({row:ri+1,t:lab.slice(0,50),why:"bukan baris pekerjaan/bagian"})});
+ const items=out.filter(x=>x.k=="it");if(!items.length)return{err:"Tidak ada baris pekerjaan yang terbaca."};
+ const sum=[items.reduce((a,i)=>a+i.v*i.h,0),items.reduce((a,i)=>a+i.v*i.p,0)];
+ return{data:out,sum,xl,adj,bad,merged,skipped:skipped.filter(x=>x.row-1<=lastGood),nSec:out.length-items.length,nItem:items.length}}
+const rowEmptyFrom=(r,i)=>r.slice(i).every(c=>c==="");
 
 /* ---- dialog ---- */
 let PD={kind:"",res:null};
@@ -1035,19 +1082,32 @@ function pasteDlg(kind,text){const old=document.getElementById("pdlg");if(old)ol
  d.innerHTML=`<div class=dbox style="max-width:900px;max-height:92vh;overflow:auto"><h3>Tempel dari Excel — ${kind=="nego"?"Rincian Negosiasi Biaya":"Koreksi Aritmatik & Harga Timpang"}</h3>
 <p class=badge>${kind=="nego"?"Di Excel, blok sel dari <b>No</b> sampai <b>Jumlah Harga Negosiasi</b> (termasuk baris bagian I, II, III…), salin (Ctrl+C), lalu tempel (Ctrl+V) di kotak ini.":"Di Excel, blok sel dari <b>No. Mata Pembayaran</b> sampai <b>Persen/Keterangan</b> (termasuk baris bagian), salin (Ctrl+C), lalu tempel (Ctrl+V) di kotak ini."} Baris judul, total, dan kolom kosong akibat sel gabungan dilewati otomatis.</p>
 <textarea id=pd_t rows=6 style="width:100%;font:12px monospace" placeholder="Tempel di sini… (Ctrl+V)" oninput="pdParse()" wrap=off></textarea>
-<div id=pd_s style="margin:8px 0"></div><div id=pd_p style="overflow:auto;max-height:230px"></div>
-<div style="display:flex;gap:18px;flex-wrap:wrap;margin:10px 0;font-size:13px"><label style="display:flex;gap:6px;align-items:center"><input type=radio name=pd_m value=replace checked style="width:auto"> Ganti seluruh tabel</label><label style="display:flex;gap:6px;align-items:center"><input type=radio name=pd_m value=append style="width:auto"> Tambahkan di bawah tabel yang ada</label>${kind=="nego"?`<label style="display:flex;gap:6px;align-items:center"><input type=checkbox id=pd_f checked style="width:auto" onchange="pdParse()"> Harga negosiasi kosong = harga penawaran</label>`:""}</div>
+<div id=pd_s style="margin:8px 0"></div><div id=pd_p style="overflow:auto;max-height:260px"></div>
+<div style="display:flex;gap:18px;flex-wrap:wrap;margin:10px 0;font-size:13px"><label style="display:flex;gap:6px;align-items:center"><input type=radio name=pd_m value=replace checked style="width:auto"> Ganti seluruh tabel</label><label style="display:flex;gap:6px;align-items:center"><input type=radio name=pd_m value=append style="width:auto"> Tambahkan di bawah tabel yang ada</label>${kind=="nego"?`<label style="display:flex;gap:6px;align-items:center"><input type=checkbox id=pd_f checked style="width:auto" onchange="pdParse()"> Harga negosiasi kosong = harga penawaran</label>`:""}<label style="display:flex;gap:6px;align-items:center" title="Excel menyalin angka seperti yang tampil (dibulatkan). Kolom Jumlah lebih presisi, sehingga harga satuan dihitung ulang darinya."><input type=checkbox id=pd_a checked style="width:auto" onchange="pdParse()"> Cocokkan harga satuan dengan kolom Jumlah Excel</label></div>
 <div style="display:flex;gap:8px"><button class=btn id=pd_ok onclick="pdApply()" disabled>Terapkan ke Tabel</button><button class="btn o" onclick="document.getElementById('pdlg').remove()">Batal</button></div></div>`;
  document.body.appendChild(d);const t=document.getElementById("pd_t");if(text){t.value=text;pdParse()}setTimeout(()=>t.focus(),30)}
-function pdParse(){const t=document.getElementById("pd_t").value,f=document.getElementById("pd_f"),s=document.getElementById("pd_s"),p=document.getElementById("pd_p"),ok=document.getElementById("pd_ok");
+function pdParse(){const t=document.getElementById("pd_t").value,f=document.getElementById("pd_f"),ad=document.getElementById("pd_a"),s=document.getElementById("pd_s"),p=document.getElementById("pd_p"),ok=document.getElementById("pd_ok");
  if(!t.trim()){s.innerHTML="";p.innerHTML="";ok.disabled=true;PD.res=null;return}
- const r=PD.kind=="nego"?parseNegoPaste(t,f?f.checked:true):parseTimPaste(t);PD.res=r;
+ const opt={fillN:f?f.checked:true,adjust:ad?ad.checked:true},nego=PD.kind=="nego",r=nego?parseNegoPaste(t,opt):parseTimPaste(t,opt);PD.res=r;
  if(r.err){s.innerHTML=msg(r.err);p.innerHTML="";ok.disabled=true;return}
- ok.disabled=false;s.innerHTML=msg(`Terbaca <b>${r.nSec}</b> bagian dan <b>${r.nItem}</b> baris pekerjaan.${r.warn.length?` ${r.warn.length} baris dilewati.`:""}`,"ok")+(r.warn.length?`<details style="font-size:12px;margin-top:4px"><summary>Lihat baris yang dilewati</summary>${r.warn.slice(0,15).map(E).join("<br>")}</details>`:"");
+ ok.disabled=false;
+ const hard=r.skipped.filter(x=>!x.soft),soft=r.skipped.filter(x=>x.soft);
+ let h=msg(`Terbaca <b>${r.nSec}</b> bagian dan <b>${r.nItem}</b> baris pekerjaan.${r.merged?` ${r.merged} baris lanjutan uraian digabung ke baris sebelumnya.`:""}${r.adj?` Harga satuan dari ${r.adj} sel disesuaikan dengan kolom Jumlah Excel (angka Excel tampil dibulatkan).`:""}`,"ok");
+ /* rekonsiliasi dengan baris TOTAL dari Excel (cocok bila salah satu baris total = hasil hitung) */
+ const names=nego?["HPS","Penawaran","Negosiasi"]:["HPS (sebelum PPN)","Penawaran (sebelum PPN)"],ppn=(S.ppn==null?.11:S.ppn);
+ const any=r.xl.some(a=>a.length);
+ if(any){const rows=names.map((n,i)=>{const a=r.xl[i];if(!a.length)return"";const cands=nego?[r.sum[i]]:[r.sum[i],r.sum[i]*(1+ppn)];
+   const hit=a.find(x=>cands.some(c=>Math.abs(x-c)<=Math.max(1,x*2e-6)));const ref=hit!=null?hit:a[a.length-1],mine=hit!=null?cands.find(c=>Math.abs(ref-c)<=Math.max(1,ref*2e-6)):cands[0];
+   return`<tr><td>${n}</td><td class=r>${fm(ref)}</td><td class=r>${fm(mine)}</td><td>${hit!=null?"✓ cocok":`<b style="color:#b91c1c">⚠ selisih ${fm(mine-ref)}</b>`}</td></tr>`}).join("");
+  h+=`<table class=tb style="margin:6px 0"><tr><th>Total</th><th>Di Excel (baris total)</th><th>Hasil tempel</th><th>Status</th></tr>${rows}</table>`}
+ else h+=`<p class=badge>Baris total Excel tidak ikut tersalin — sertakan baris “JUMLAH TOTAL” agar hasil dapat diverifikasi otomatis.</p>`;
+ if(hard.length)h+=`<details open style="font-size:12.5px;margin:6px 0;color:#92400e"><summary><b>${hard.length} baris dilewati</b> — periksa apakah ada pekerjaan yang terlewat</summary>${hard.map(x=>`Baris ${x.row}: ${E(x.t)} <i>(${x.why})</i>`).join("<br>")}</details>`;
+ if(soft.length)h+=`<details style="font-size:12.5px;margin:6px 0"><summary>${soft.length} peringatan angka</summary>${soft.map(x=>`Baris ${x.row}: ${E(x.t)} <i>(${x.why})</i>`).join("<br>")}</details>`;
+ s.innerHTML=h;
  let rows="";
- if(PD.kind=="nego")r.data.forEach(sec=>{rows+=`<tr class=sc><td colspan=7><b>${E(sec.t)}</b></td></tr>`;sec.items.slice(0,6).forEach((it,j)=>rows+=`<tr><td>${j+1}</td><td>${E(it.u)}</td><td class=r>${it.v}</td><td>${E(it.s)}</td><td class=r>${nf(it.h)}</td><td class=r>${nf(it.p)}</td><td class=r>${nf(it.n)}</td></tr>`);if(sec.items.length>6)rows+=`<tr><td colspan=7><i>… +${sec.items.length-6} baris lainnya</i></td></tr>`});
- else r.data.slice(0,16).forEach(x=>rows+=x.k=="sec"?`<tr class=sc><td colspan=6><b>${E(x.n)} ${E(x.t)}</b></td></tr>`:`<tr><td>${E(x.n)}</td><td>${E(x.u)}</td><td class=r>${x.v}</td><td>${E(x.s)}</td><td class=r>${nf(x.h)}</td><td class=r>${nf(x.p)}</td></tr>`);
- p.innerHTML=`<table class=tb><tr>${PD.kind=="nego"?"<th>No</th><th>Uraian</th><th>Vol</th><th>Sat</th><th>Harga Sat. HPS</th><th>Harga Sat. Penawaran</th><th>Harga Sat. Nego</th>":"<th>No</th><th>Uraian</th><th>Qty</th><th>Sat</th><th>Harga Sat. HPS</th><th>Harga Sat. Penawaran</th>"}</tr>${rows}</table>`}
+ if(nego)r.data.forEach(sec=>{rows+=`<tr class=sc><td colspan=6><b>${E(sec.t)}</b></td></tr>`;sec.items.forEach((it,j)=>rows+=`<tr><td>${j+1}. ${E(it.u)}</td><td class=r>${it.v}</td><td>${E(it.s)}</td><td class=r>${fm(it.h)}</td><td class=r>${fm(it.p)}</td><td class=r>${fm(it.n)}</td></tr>`)});
+ else r.data.forEach(x=>rows+=x.k=="sec"?`<tr class=sc><td colspan=5><b>${E(x.n)} ${E(x.t)}</b></td></tr>`:`<tr><td>${E(x.n)} ${E(x.u)}</td><td class=r>${x.v}</td><td>${E(x.s)}</td><td class=r>${fm(x.h)}</td><td class=r>${fm(x.p)}</td></tr>`);
+ p.innerHTML=`<table class=tb><tr>${nego?"<th>Uraian</th><th>Vol</th><th>Sat</th><th>Harga Sat. HPS</th><th>Harga Sat. Penawaran</th><th>Harga Sat. Nego</th>":"<th>Uraian</th><th>Qty</th><th>Sat</th><th>Harga Sat. HPS</th><th>Harga Sat. Penawaran</th>"}</tr>${rows}</table>`}
 function pdApply(){const r=PD.res;if(!r||r.err)return;const app=document.querySelector("input[name=pd_m]:checked").value=="append";
  if(PD.kind=="nego"){S.nego=app?S.nego.concat(r.data):r.data;const c=document.querySelector("[data-comp=nego]");if(c)renderNego(c)}
  else{S.tim=app?S.tim.concat(r.data):r.data;const c=document.querySelector("[data-comp=tim]");if(c)renderTim(c)}
@@ -1201,7 +1261,7 @@ function topbar(){const P=PROF(),pend=isAdmin()?Object.values(USERS).filter(u=>u
 function side(){if(!INPROJ){$("#side").innerHTML=`<div class=grp>Menu</div><button class=t onclick="toDash()"><span class=n>◀</span><span>Dashboard Proyek</span></button>${isAdmin()?`<button class="t ${tab=="admin"?"on":""}" onclick="go('admin')"><span class=n>🛡</span><span>Kelola Akun</span></button>`:""}<button class="t ${tab=="akun"?"on":""}" onclick="go('akun')"><span class=n>👤</span><span>Akun Saya</span></button>`;return}
  $("#side").innerHTML=NAV.map(([g,a])=>`<div class=grp>${g}</div>`+a.map(([k,l,n])=>`<button class="t ${n=="sub"?"sub":""} ${k==tab?"on":""}" onclick="go('${k}')">${n=="sub"?"↳":`<span class=n>${n}</span>`}<span>${l}</span></button>`).join("")).join("")+`<div class=foot><label>Proyek</label><div class=badge style="word-break:break-all">${PROF().title} · ${E(pid)}</div><div style="margin-top:8px" class=badge id=st>${AUTH?"Firebase aktif · data milik "+E(CURU.u):"Mode lokal (belum ada config Firebase)"}</div></div>`}
 function bank(){const b=S.b,TN=MODE=="TN";
- const field=([k,l,ty])=>ty&&ty.startsWith("sel")?`<div><label>${l}</label><select onchange="S.b.${k}=this.value;bchg()">${ty.slice(4).split("|").map(o=>`<option value="${o}" ${o==b[k]?"selected":""}>${JENIS[o]?o+" — "+JENIS[o]:o}</option>`).join("")}</select></div>`:ty=="area"?`<div style="grid-column:1/-1"><label>${l}</label><textarea rows=4 oninput="S.b.${k}=this.value;bchg()">${E(b[k])}</textarea></div>`:`<div><label>${l}</label><input ${ty=="num"?"type=number step=any":ty=="date"?"type=date":""} value="${E(b[k])}" oninput="S.b.${k}=${ty=="num"?"+this.value":"this.value"};bchg()"></div>`;
+ const field=([k,l,ty])=>k=="jenis"?`<div><label>Jenis Pengadaan</label><input value="${E(b.jenis)} — ${E(JENIS[b.jenis]||"")}" disabled style="background:var(--in);cursor:not-allowed;opacity:.85"><p class=badge style="margin:4px 0 0">🔒 Dipilih saat proyek dibuat — tidak dapat diubah.</p></div>`:ty&&ty.startsWith("sel")?`<div><label>${l}</label><select onchange="S.b.${k}=this.value;bchg()">${ty.slice(4).split("|").map(o=>`<option value="${o}" ${o==b[k]?"selected":""}>${JENIS[o]?o+" — "+JENIS[o]:o}</option>`).join("")}</select></div>`:ty=="area"?`<div style="grid-column:1/-1"><label>${l}</label><textarea rows=4 oninput="S.b.${k}=this.value;bchg()">${E(b[k])}</textarea></div>`:`<div><label>${l}</label><input ${ty=="num"?"type=number step=any":ty=="date"?"type=date":""} value="${E(b[k])}" oninput="S.b.${k}=${ty=="num"?"+this.value":"this.value"};bchg()"></div>`;
  const note=g=>/^Informasi Paket/.test(g)?`<p class=badge id=terbp>Terbilang Pagu: ${terb(b.pagu)}<br>Terbilang HPS: ${terb(b.hps)}</p><p class=badge>Template <b>Lampiran Reviu</b>${TN?"":" dan <b>BA Pembuktian Kualifikasi</b>"} mengikuti jenis pengadaan ini (sheet ${TN?"LAMP REVIU":"LDK / LAMPREVIU"}(${b.jenis}) di Excel).</p>`:"";
  return `<div class=crumb>Beranda / Data Paket</div><div class=ptitle><h2>Bank Data ${TN?"Tender":""}</h2><span class=badge id=st2>Tersimpan otomatis</span></div>`+
  FIELDS.map(([g,fs])=>`<div class=card><h3>${g}</h3><div class=bd><div class=grid>${fs.map(field).join("")}</div>${note(g)}</div></div>`).join("")+(TN?pesCard():"")+
@@ -1230,7 +1290,7 @@ async function load(){try{let d=null;if(db){const s=await DOCREF().get();if(s.ex
    Registri proyek: users/{uid}/projects/{id}  (ringkasan, cepat dimuat)
    Data kertas kerja: users/{uid}/paket/{id} (PL) atau users/{uid}/tender/{id} (Tender)
    ===================================================================== */
-let PROJ=[],INPROJ=false,DF={q:"",t:"",j:"",s:"date",d:"upd",o:"desc"};
+let PROJ=[],INPROJ=false,DF={q:"",t:"",j:"",s:"date",d:"upd",o:"desc",v:localStorage.getItem("kk_view")||"grid"};
 const JNORD=["PK","B","JL","JKK","JKNK"];
 const tglPaket=t=>{t=t||{};const f=t["UND-REV"];if(f&&f.tgl)return f.tgl;for(const k in t)if(t[k]&&t[k].tgl)return t[k].tgl;return""};
 const PK=()=>"kk_proj_"+CURU.u;
@@ -1291,13 +1351,14 @@ function dashDraw(){
 ${top.length?`<div class=dpanel><h3>Nilai HPS — 5 proyek terbesar</h3>${top.map(p=>`<div class=hb><span title="${E(p.name)}">${E(p.name)}</span><div><i class="${p.type}" style="width:${Math.max(2,(p.hps||0)/mx*100)}%"></i></div><em>${rpS(p.hps)}</em></div>`).join("")}</div>`:""}
 <div class=dbar><input id=dq placeholder="Cari nama paket / kode / satker…" value="${E(DF.q)}" oninput="DF.q=this.value;dashGrid()">
 <div class=chips>${[["","Semua"],["PL","Pengadaan Langsung"],["TN","Tender"]].map(([v,l])=>`<button class="chip ${DF.t==v?"on":""}" onclick="DF.t='${v}';dashDraw()">${l}</button>`).join("")}</div>
-<button class=btn onclick="dashNew()">＋ Proyek Baru</button></div>
+<div class=seg><button class="${DF.v!="list"?"on":""}" onclick="setView('grid')" title="Tampilan kotak">▦ Grid</button><button class="${DF.v=="list"?"on":""}" onclick="setView('list')" title="Tampilan daftar">☰ List</button></div><button class=btn onclick="dashNew()">＋ Proyek Baru</button></div>
 <div class=dbar><span class=lbl>Jenis Pengadaan</span><div class=chips>${[["","Semua"],...JNORD.map(j=>[j,j])].map(([v,l])=>{const c=v?all.filter(p=>p.jenis==v).length:all.length;return`<button class="chip jn ${DF.j==v?"on":""}" title="${v?JENIS[v]:"Semua jenis"}" onclick="DF.j='${v}';dashDraw()">${l} <em>${c}</em></button>`}).join("")}</div></div>
 <div class=dbar><span class=lbl>Urutkan</span><select onchange="DF.s=this.value;dashGrid()"><option value=date ${DF.s=="date"?"selected":""}>Tanggal</option><option value=jenis ${DF.s=="jenis"?"selected":""}>Jenis Pengadaan (lalu tanggal)</option><option value=name ${DF.s=="name"?"selected":""}>Nama A–Z</option><option value=hps ${DF.s=="hps"?"selected":""}>Nilai HPS terbesar</option></select>
 <span class=lbl>Tanggal</span><select onchange="DF.d=this.value;dashGrid()"><option value=upd ${DF.d=="upd"?"selected":""}>Terakhir diubah</option><option value=tgl ${DF.d=="tgl"?"selected":""}>Tanggal paket (undangan)</option><option value=cr ${DF.d=="cr"?"selected":""}>Tanggal dibuat</option></select>
 <select onchange="DF.o=this.value;dashGrid()"><option value=desc ${DF.o=="desc"?"selected":""}>Terbaru → terlama</option><option value=asc ${DF.o=="asc"?"selected":""}>Terlama → terbaru</option></select></div>
 <div id=dgrid></div></div>`;
  dashGrid()}
+function setView(v){DF.v=v;localStorage.setItem("kk_view",v);dashDraw()}
 function dashGrid(){const g=document.getElementById("dgrid");if(!g)return;const q=DF.q.toLowerCase();
  let L=PROJ.filter(p=>(!DF.t||p.type==DF.t)&&(!DF.j||p.jenis==DF.j)&&(!q||[p.name,p.kode,p.satker,p.jenis].join(" ").toLowerCase().includes(q)));
  const dv=p=>DF.d=="tgl"?(Date.parse(p.tgl)||0):DF.d=="cr"?(p.created||0):(p.updated||0),sg=DF.o=="asc"?1:-1,cd=(x,y)=>sg*(dv(x)-dv(y)),jo=p=>{const i=JNORD.indexOf(p.jenis);return i<0?99:i};
@@ -1305,6 +1366,11 @@ function dashGrid(){const g=document.getElementById("dgrid");if(!g)return;const 
  const card=p=>`<div class="pcard ${p.type}"><div class=ph><span class=tg2><span class="tag ${p.type=="TN"?"tn":""}">${p.type=="TN"?"Tender":"Pengadaan Langsung"}</span><span class="tag jn" title="${E(JENIS[p.jenis]||"Jenis belum diisi")}">${E(p.jenis||"—")}</span></span><small>${p.updated?ago(p.updated):""}</small></div><h4>${E(p.name)}</h4><div class=pm>${E(JENIS[p.jenis]||"Jenis belum diisi")}</div><div class=pm>${E(p.satker||"—")}${p.ta?" · TA "+E(p.ta):""}</div><div class=pm>Kode: ${E(p.kode||"—")}${p.tgl?" · Tgl paket: "+E(fd(p.tgl)):""}</div><div class=pv>${rpS(p.hps)}<small> HPS</small></div><div class=bar><i style="width:${p.done||0}%"></i></div><small class=pm>Kelengkapan data ${p.done||0}%</small>
 <div class=pa><button class=btn onclick="openProject('${E(p.id)}')">Buka</button><button class="btn o" onclick="dupProj('${E(p.id)}')">Duplikat</button><button class="btn d" onclick="delProj('${E(p.id)}')">Hapus</button></div></div>`;
  if(!L.length){g.innerHTML=`<div class=dempty><div style="font-size:42px">📁</div><b>${PROJ.length?"Tidak ada proyek yang cocok":"Belum ada proyek"}</b><p>${PROJ.length?"Ubah kata kunci atau filter.":"Klik <b>＋ Proyek Baru</b> untuk memulai kertas kerja Pengadaan Langsung atau Tender."}</p></div>`;return}
+ if(DF.v=="list"){
+  const row=p=>`<tr><td><span class="tag jn" title="${E(JENIS[p.jenis]||"")}">${E(p.jenis||"—")}</span></td><td><a class=plink onclick="openProject('${E(p.id)}')">${E(p.name)}</a><div class=pm>${E(JENIS[p.jenis]||"Jenis belum diisi")}</div></td><td><span class="tag ${p.type=="TN"?"tn":""}">${p.type=="TN"?"Pokja · Tender":"Pejabat · PL"}</span></td><td>${E(p.satker||"—")}${p.ta?`<div class=pm>TA ${E(p.ta)}</div>`:""}</td><td>${E(p.kode||"—")}</td><td style="white-space:nowrap">${p.tgl?E(fd(p.tgl)):"—"}</td><td class=r style="white-space:nowrap"><b>${rpS(p.hps)}</b></td><td style="min-width:90px"><div class=bar><i style="width:${p.done||0}%"></i></div><small class=pm>${p.done||0}%</small></td><td style="white-space:nowrap"><small class=pm>${p.updated?ago(p.updated):""}</small></td><td style="white-space:nowrap"><button class=btn onclick="openProject('${E(p.id)}')">Buka</button> <button class="btn o" onclick="dupProj('${E(p.id)}')">Duplikat</button> <button class="btn d" onclick="delProj('${E(p.id)}')">Hapus</button></td></tr>`;
+  const th=`<tr><th>Jenis</th><th>Nama Paket</th><th>Pelaksana</th><th>Satuan Kerja</th><th>Kode</th><th>Tgl Paket</th><th>Nilai HPS</th><th>Kelengkapan</th><th>Diubah</th><th></th></tr>`;
+  if(DF.s=="jenis"){let h=`<div class=lwrap><table class="tb ltab">${th}`,last="#";L.forEach(p=>{const k=p.jenis||"";if(k!==last){const n=L.filter(x=>(x.jenis||"")==k).length;h+=`<tr class=jhr><td colspan=10><span class="tag jn">${E(k||"—")}</span> <b>${E(JENIS[k]||"Jenis belum diisi")}</b> <em>${n}</em></td></tr>`;last=k}h+=row(p)});g.innerHTML=h+"</table></div>"}
+  else g.innerHTML=`<div class=lwrap><table class="tb ltab">${th}${L.map(row).join("")}</table></div>`;return}
  if(DF.s=="jenis"){let h="",last="#";L.forEach(p=>{const k=p.jenis||"";if(k!==last){if(last!=="#")h+="</div>";const n=L.filter(x=>(x.jenis||"")==k).length;h+=`<h3 class=jh><span class="tag jn">${E(k||"—")}</span> ${E(JENIS[k]||"Jenis belum diisi")} <em>${n}</em></h3><div class=pgrid>`;last=k}h+=card(p)});g.innerHTML=h+"</div>"}
  else g.innerHTML=`<div class=pgrid>${L.map(card).join("")}</div>`}
 
