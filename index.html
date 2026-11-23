@@ -181,6 +181,21 @@ body.noapp #top,body.noapp #wrap{display:none}
 .pa{display:flex;gap:6px;margin-top:12px}.pa .btn{padding:6px 12px}
 .dempty{text-align:center;padding:60px 20px;color:var(--mu);background:var(--sf);border:1px dashed var(--bd);border-radius:10px}
 .dmodal{position:fixed;inset:0;background:#0008;z-index:200;display:grid;place-items:center;padding:20px}.dbox{background:var(--sf);color:var(--tx);border-radius:10px;padding:20px 22px;width:100%;max-width:440px}.dbox h3{margin:0 0 6px}
+
+.dbar .lbl{font-size:12px;color:var(--mu);font-weight:600}
+.chip.jn em{font-style:normal;opacity:.7;font-size:11px;margin-left:2px}
+.tag.jn{background:#ede9fe;color:#5b21b6}.tg2{display:flex;gap:5px;align-items:center}
+.jh{margin:18px 0 8px;font-size:14px;display:flex;align-items:center;gap:8px}.jh em{font-style:normal;color:var(--mu);font-weight:400}
+.dmodal textarea{width:100%}
+
+.npsteps{display:flex;gap:6px;margin:12px 0 14px;font-size:12px;color:var(--mu);flex-wrap:wrap}
+.npsteps span{padding:4px 10px;border-radius:999px;background:var(--in);border:1px solid var(--bd)}
+.npsteps span.on{background:var(--ac);color:#fff;border-color:var(--ac)}.npsteps span.done{background:#dcfce7;color:#166534;border-color:#bbf7d0}
+.npsteps b{margin-right:3px}
+.jgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.jcard{display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:left;border:2px solid var(--bd);background:var(--in);color:var(--tx);border-radius:10px;padding:12px 14px;cursor:pointer;font:inherit}
+.jcard:hover{border-color:var(--ac);background:var(--acs)}.jcard b{font-size:13.5px}
+@media(max-width:520px){.jgrid{grid-template-columns:1fr}}
 </style></head><body class="noapp">
 <header id="top"></header>
 <div id="wrap"><nav id="side"></nav><main id="main"></main></div>
@@ -510,8 +525,9 @@ if(d){S.b={...DEF,...d.b};for(const k in d.t)S.t[k]={...(S.t[k]||{}),...d.t[k]};
    BAGIAN 1 — Helper bersama + perbaikan Pengadaan Langsung (PL)
    ===================================================================== */
 /* parse angka format Indonesia: "1.234.567,89" / "1234567,89" / "1234567.89" */
-const pn=s=>{if(typeof s=="number")return isFinite(s)?s:0;s=String(s??"").trim().replace(/Rp\.?/gi,"").replace(/\s/g,"");if(!s)return 0;
-  if(s.includes(","))s=s.replace(/\./g,"").replace(",",".");else if(/^-?\d{1,3}(\.\d{3})+$/.test(s))s=s.replace(/\./g,"");
+const pn=s=>{if(typeof s=="number")return isFinite(s)?s:0;s=String(s??"").trim().replace(/Rp\.?/gi,"").replace(/[\s\u00a0]/g,"").replace(/%$/,"");if(!s)return 0;
+  if(s.includes(",")&&s.includes(".")){s=s.lastIndexOf(",")>s.lastIndexOf(".")?s.replace(/\./g,"").replace(",","."):s.replace(/,/g,"")}
+  else if(s.includes(","))s=s.replace(/\./g,"").replace(",",".");else if(/^-?\d{1,3}(\.\d{3})+$/.test(s))s=s.replace(/\./g,"");
   const v=parseFloat(s);return isNaN(v)?0:v};
 /* format akuntansi: "Rp." di kiri sel, angka rata kanan -> Rp.   1.234.567,00 */
 const acc=n=>`<span class=ac><span>Rp.</span><span>${nf(n)}</span></span>`;
@@ -601,7 +617,7 @@ function cwGet(key,def){const a=(S.cw&&S.cw[key])||[];return def.map((w,i)=>a[i]
 const cwSum=a=>a.reduce((x,y)=>x+y,0);
 const cwHtml=a=>`<colgroup>${a.map(w=>`<col style="width:${w}px">`).join("")}</colgroup>`;
 const rzRow=(n,extra=0)=>`<tr class="rzr noprint">${Array.from({length:n},(_,i)=>`<td><i data-ci=${i} title="Tarik untuk mengatur lebar kolom · klik ganda = ukuran awal"></i></td>`).join("")}${extra?`<td></td>`.repeat(extra):""}</tr>`;
-const rzHint=`<div class="rzhint noprint">↔ Tarik batang biru di atas judul kolom untuk melebarkan / menyempitkan kolom (klik ganda pada batang = kembali ke ukuran awal). <button class=mini onclick="cwReset()">Reset semua lebar kolom</button></div>`;
+const rzHint=`<div class="rzhint noprint">📋 Bisa langsung Ctrl+V dari Excel (blok sel tabel). ↔ Tarik batang biru di atas judul kolom untuk melebarkan / menyempitkan kolom (klik ganda pada batang = kembali ke ukuran awal). <button class=mini onclick="cwReset()">Reset semua lebar kolom</button></div>`;
 const mon=(i,j,k)=>`<div class=ai><span>Rp.</span><input class="nr money" data-i=${i} data-j=${j} data-k=${k} value="${nf(S.nego[i].items[j][k])}" onfocus="monF(this)" onblur="monB(this)" oninput="negoIn(this)"></div>`;
 function monF(el){const v=pn(el.value);el.value=v?String(v).replace(".",","):"";el.select()}
 function monB(el){el.value=nf(pn(el.value))}
@@ -622,7 +638,7 @@ function renderNego(el){
 <td>${mon(i,j,"n")}</td><td>${inp(i,j,"np",1)}</td><td class=r data-c="n.${i}.${j}"></td><td class=noprint style="border:0"><button class="mini x" title="Hapus baris" onclick="negoDel(${i},${j})">✕</button></td></tr>`});
  });
  h+=`<tr class=sc><td colspan=6 style="text-align:right">JUMLAH TOTAL BIAYA</td><td class=r data-c="th"></td><td colspan=2></td><td class=r data-c="tp"></td><td colspan=2></td><td class=r data-c="tn"></td><td class=noprint style="border:0"></td></tr></table></div>
-<div class="acts noprint"><button class=mini onclick="negoAddSec()">+ Tambah bagian (I, II, III …)</button><button class=mini onclick="negoApply()">Terapkan total ke Bank Data (Harga Penawaran / Negosiasi)</button></div>
+<div class="acts noprint"><button class=mini onclick="negoAddSec()">+ Tambah bagian (I, II, III …)</button><button class=mini onclick="pasteDlg('nego')">📋 Tempel dari Excel</button><button class=mini onclick="negoApply()">Terapkan total ke Bank Data (Harga Penawaran / Negosiasi)</button></div>
 <p><b>REKAPITULASI</b></p><div class=nscroll><table data-cw=rekap style="width:${cwSum(cr)}px">${cwHtml(cr)}${rzRow(5)}<tr><th>No.</th><th>Uraian</th><th>Harga Perkiraan Sendiri</th><th>Harga Penawaran</th><th>Harga Negosiasi</th></tr>`;
  S.nego.forEach((s,i)=>{h+=`<tr><td style="text-align:center">${ROM[i+1]||i+1}</td><td>${E(s.t)}</td><td class=r data-c="rh.${i}"></td><td class=r data-c="rp.${i}"></td><td class=r data-c="rn.${i}"></td></tr>`});
  h+=`<tr class=sc><td colspan=2 style="text-align:right">Jumlah Total</td><td class=r data-c="th2"></td><td class=r data-c="tp2"></td><td class=r data-c="tn2"></td></tr></table></div></div>`;
@@ -912,7 +928,7 @@ function renderTim(el){
   else h+=`<tr data-trow=${i}><td><input value="${E(x.n)}" data-ti=${i} data-tk=n oninput="timIn(this)" style="text-align:center"></td><td><input value="${E(x.u)}" data-ti=${i} data-tk=u oninput="timIn(this)"></td><td><input type=number step=any class=nr value="${x.v}" data-ti=${i} data-tk=v oninput="timIn(this)"></td><td><input value="${E(x.s)}" data-ti=${i} data-tk=s oninput="timIn(this)"></td><td>${mn(i,"h")}</td><td class=r data-tc="jh.${i}"></td><td>${mn(i,"p")}</td><td class=r data-tc="jp.${i}"></td><td class=c data-tc="pc.${i}"></td><td><input value="${E(x.ket||"")}" data-ti=${i} data-tk=ket oninput="timIn(this)"></td><td class=noprint style="border:0"><button class="mini x" title="Hapus baris" onclick="timDel(${i})">✕</button></td></tr>`});
  const rows=[["JUMLAH TOTAL","jh","jp"],["PPN <input type=number step=any class=nr style=\"width:44px;display:inline\" value=\""+Math.round((S.ppn==null?.11:S.ppn)*10000)/100+"\" oninput=\"S.ppn=(parseFloat(this.value)||0)/100;calcTim(this.closest('.nego'));sv()\"> %","ph","pp"],["JUMLAH TOTAL (+ PPN)","th","tp"],["JUMLAH TOTAL (DIBULATKAN)","bh","bp"]];
  h+=rows.map(r=>`<tr class=sc><td colspan=5 style="text-align:right">${r[0]}</td><td class=r data-tc="${r[1]}"></td><td></td><td class=r data-tc="${r[2]}"></td><td colspan=2></td><td class=noprint style="border:0"></td></tr>`).join("")+`</table></div>
-<div class="acts noprint"><button class=mini onclick="timAddSec()">+ Tambah bagian</button><button class=mini onclick="timApply()">Terapkan total penawaran sebagai Harga Terkoreksi peserta aktif</button></div><p id=timTerb style="font-size:10pt"></p><p style="font-size:10pt;margin:4px 0">Baris berlatar merah muda = harga satuan penawaran &gt; 110% harga satuan HPS (harga timpang).</p></div>`;
+<div class="acts noprint"><button class=mini onclick="pasteDlg('tim')">📋 Tempel dari Excel</button><button class=mini onclick="timAddSec()">+ Tambah bagian</button><button class=mini onclick="timApply()">Terapkan total penawaran sebagai Harga Terkoreksi peserta aktif</button></div><p id=timTerb style="font-size:10pt"></p><p style="font-size:10pt;margin:4px 0">Baris berlatar merah muda = harga satuan penawaran &gt; 110% harga satuan HPS (harga timpang).</p></div>`;
  el.innerHTML=h;calcTim(el.querySelector(".nego"));
 }
 function calcTim(root){root=root||document;const set=(k,v)=>root.querySelectorAll(`[data-tc="${k}"]`).forEach(e=>e.innerHTML=acc(v));const m=timSum();
@@ -945,6 +961,102 @@ function pesAdd(){S.pes.push({nama:"CV. PESERTA BARU",tawar:0,koreksi:0,alamat:"
 function pesDel(i){if(!confirm("Hapus peserta ini?"))return;S.pes.splice(i,1);["win","c1","c2","aktif"].forEach(k=>{const v=S.b[k];if(v===""||v==null)return;if(+v==i)S.b[k]=k=="win"?0:"";else if(+v>i)S.b[k]=+v-1});rerenderBank()}
 function pesSort(){const w=S.pes[+S.b.win],c1=CADP(1),c2=CADP(2),a=S.b.aktif===""?null:S.pes[+S.b.aktif];S.pes.sort((x,y)=>(x.tawar||1e18)-(y.tawar||1e18));const ix=p=>p?S.pes.indexOf(p):"";S.b.win=ix(w);S.b.c1=ix(c1);S.b.c2=ix(c2);S.b.aktif=ix(a);rerenderBank()}
 function rerenderBank(){const m=$("#main");m.innerHTML=bank();sv()}
+
+/* =====================================================================
+   BAGIAN 6 — Tempel dari Excel (Lampiran Nego PL & Lampiran Harga Timpang Tender)
+   ===================================================================== */
+function parseTSV(t){ /* tab-delimited dengan dukungan sel bertanda kutip (hasil salin Excel) */
+ const rows=[];let row=[],cell="",q=false;t=t.replace(/\r\n?/g,"\n");
+ for(let i=0;i<t.length;i++){const c=t[i];
+  if(q){if(c=='"'){if(t[i+1]=='"'){cell+='"';i++}else q=false}else cell+=c}
+  else if(c=='"'&&cell==="")q=true;
+  else if(c=="\t"){row.push(cell.trim());cell=""}
+  else if(c=="\n"){row.push(cell.trim());rows.push(row);row=[];cell=""}
+  else cell+=c}
+ if(cell!==""||row.length){row.push(cell.trim());rows.push(row)}
+ return rows}
+const isNumS=s=>s!==""&&/^-?(rp\.?)?[\d.,]+%?$/i.test(s.replace(/[\s\u00a0]/g,""));
+const pjS=x=>{if(x===""||x==null)return .11;const v=pn(x);return /%/.test(x)?v/100:(v>1?v/100:v)};
+function tsvPrep(text){ /* rapikan: buang baris kosong & kolom kosong (sel gabungan Excel), pastikan ada kolom No */
+ let rows=parseTSV(text).filter(r=>r.some(c=>c!==""));if(!rows.length)return null;
+ const w=Math.max(...rows.map(r=>r.length));rows=rows.map(r=>r.concat(Array(w-r.length).fill("")));
+ const keep=[...Array(w).keys()].filter(c=>rows.some(r=>r[c]!==""));rows=rows.map(r=>keep.map(c=>r[c]));
+ const noLike=r=>/^([IVXLC]+|[A-Z]|\d+)[.)]?$/i.test(r[0]);
+ if(rows.filter(noLike).length<rows.length*.4)rows=rows.map(r=>[""].concat(r));
+ return rows}
+const isTotRow=(no,u)=>/^(jumlah|total|ppn|rekap|pembulatan|dibulatkan|terbilang|sub\s?total)/i.test(u)||/^(jumlah|total)/i.test(no);
+const isHdrRow=(no,u)=>/^no\.?$/i.test(no)||/^uraian/i.test(u);
+
+/* posisi kolom Vol/Qty = kolom angka yang diikuti satuan (teks) pada baris pekerjaan */
+function volIdx(rows){const c={};rows.forEach(r=>{if(!r[1])return;for(let i=2;i<r.length-1;i++){if(isNumS(r[i])){if(r[i+1]!==""&&!isNumS(r[i+1]))c[i]=(c[i]||0)+1;break}}});
+ const k=Object.keys(c).sort((x,y)=>c[y]-c[x])[0];return k===undefined?-1:+k}
+const rowEmptyFrom=(r,i)=>r.slice(i).every(c=>c==="");
+function parseNegoPaste(text,fillN){
+ const rows=tsvPrep(text);if(!rows)return{err:"Belum ada data."};
+ const vi=volIdx(rows);if(vi<0)return{err:"Kolom Vol. dan Sat. tidak ditemukan. Pastikan blok yang disalin memuat kolom Vol. (angka) diikuti Sat. (teks)."};
+ const rem=rows[0].length-vi;let L;
+ if(rem>=11)L={h:vi+2,hp:vi+3,p:vi+5,pp:vi+6,n:vi+8,np:vi+9};else if(rem>=8)L={h:vi+2,hp:vi+3,p:vi+4,pp:vi+5,n:vi+6,np:vi+7};
+ else return{err:`Kolom setelah Vol. hanya ${rem}. Salin sampai Harga Negosiasi (Vol, Sat, lalu 3 kelompok Harga Satuan/Pajak/Jumlah).`};
+ const out=[],warn=[];let cur=null;
+ rows.forEach((r,ri)=>{const no=r[0],u=r[1];
+  if(isTotRow(no,u)||isHdrRow(no,u))return;
+  if(u&&/^[IVXLC]+\.?$/i.test(no)&&!r[vi+1])out.push(cur={t:u,items:[]});
+  else if(u&&isNumS(r[vi])){
+   if(!cur){cur={t:"PEKERJAAN",items:[]};out.push(cur)}
+   const it={u,v:pn(r[vi]),s:r[vi+1],h:pn(r[L.h]),hp:pjS(r[L.hp]),p:pn(r[L.p]),pp:pjS(r[L.pp]),n:pn(r[L.n]),np:pjS(r[L.np])};
+   if(fillN&&!it.n&&it.p){it.n=it.p;it.np=it.pp}
+   cur.items.push(it)}
+  else if(u&&(/^[IVXLC]+\.?$/i.test(no)||(no===""&&rowEmptyFrom(r,2))))out.push(cur={t:u,items:[]});
+  else if(u&&no!==""){warn.push(`Baris ${ri+1} dilewati: "${(no+" "+u).trim().slice(0,50)}"`)}});
+ const data=out.filter(x=>x.items.length);
+ if(!data.length)return{err:"Tidak ada baris pekerjaan yang terbaca."};
+ return{data,nSec:data.length,nItem:data.reduce((a,x)=>a+x.items.length,0),warn}}
+
+function parseTimPaste(text){
+ const rows=tsvPrep(text);if(!rows)return{err:"Belum ada data."};
+ const vi=volIdx(rows);if(vi<0)return{err:"Kolom Kuantitas dan Sat. tidak ditemukan. Pastikan blok yang disalin memuat kolom Kuantitas (angka) diikuti Sat. (teks)."};
+ const rem=rows[0].length-vi;let L;
+ if(rem>=5)L={h:vi+2,p:vi+4,ket:rem>=8?vi+7:-1};else if(rem==4)L={h:vi+2,p:vi+3,ket:-1};
+ else return{err:`Kolom setelah Kuantitas hanya ${rem}. Salin sampai Harga Penawaran.`};
+ const out=[],warn=[];
+ rows.forEach((r,ri)=>{const no=r[0],u=r[1];
+  if(isTotRow(no,u)||isHdrRow(no,u)||/^no\.?\s*mata/i.test(no))return;
+  if(u&&/^([IVXLC]+|[A-Z])\.?$/i.test(no)&&!r[vi+1])out.push({k:"sec",n:no,t:u});
+  else if(u&&isNumS(r[vi]))out.push({k:"it",n:no,u,v:pn(r[vi]),s:r[vi+1],h:pn(r[L.h]),p:pn(r[L.p]),ket:L.ket>=0&&r[L.ket]&&!isNumS(r[L.ket])?r[L.ket]:""});
+  else if(u&&rowEmptyFrom(r,vi))out.push({k:"sec",n:no,t:u});
+  else if(u&&no!=="")warn.push(`Baris ${ri+1} dilewati: "${(no+" "+u).trim().slice(0,50)}"`)});
+ const nItem=out.filter(x=>x.k=="it").length;if(!nItem)return{err:"Tidak ada baris pekerjaan yang terbaca."};
+ return{data:out,nSec:out.filter(x=>x.k=="sec").length,nItem,warn}}
+
+/* ---- dialog ---- */
+let PD={kind:"",res:null};
+function pasteDlg(kind,text){const old=document.getElementById("pdlg");if(old)old.remove();PD={kind,res:null};
+ const d=document.createElement("div");d.className="dmodal";d.id="pdlg";
+ d.innerHTML=`<div class=dbox style="max-width:900px;max-height:92vh;overflow:auto"><h3>Tempel dari Excel — ${kind=="nego"?"Rincian Negosiasi Biaya":"Koreksi Aritmatik & Harga Timpang"}</h3>
+<p class=badge>${kind=="nego"?"Di Excel, blok sel dari <b>No</b> sampai <b>Jumlah Harga Negosiasi</b> (termasuk baris bagian I, II, III…), salin (Ctrl+C), lalu tempel (Ctrl+V) di kotak ini.":"Di Excel, blok sel dari <b>No. Mata Pembayaran</b> sampai <b>Persen/Keterangan</b> (termasuk baris bagian), salin (Ctrl+C), lalu tempel (Ctrl+V) di kotak ini."} Baris judul, total, dan kolom kosong akibat sel gabungan dilewati otomatis.</p>
+<textarea id=pd_t rows=6 style="width:100%;font:12px monospace" placeholder="Tempel di sini… (Ctrl+V)" oninput="pdParse()" wrap=off></textarea>
+<div id=pd_s style="margin:8px 0"></div><div id=pd_p style="overflow:auto;max-height:230px"></div>
+<div style="display:flex;gap:18px;flex-wrap:wrap;margin:10px 0;font-size:13px"><label style="display:flex;gap:6px;align-items:center"><input type=radio name=pd_m value=replace checked style="width:auto"> Ganti seluruh tabel</label><label style="display:flex;gap:6px;align-items:center"><input type=radio name=pd_m value=append style="width:auto"> Tambahkan di bawah tabel yang ada</label>${kind=="nego"?`<label style="display:flex;gap:6px;align-items:center"><input type=checkbox id=pd_f checked style="width:auto" onchange="pdParse()"> Harga negosiasi kosong = harga penawaran</label>`:""}</div>
+<div style="display:flex;gap:8px"><button class=btn id=pd_ok onclick="pdApply()" disabled>Terapkan ke Tabel</button><button class="btn o" onclick="document.getElementById('pdlg').remove()">Batal</button></div></div>`;
+ document.body.appendChild(d);const t=document.getElementById("pd_t");if(text){t.value=text;pdParse()}setTimeout(()=>t.focus(),30)}
+function pdParse(){const t=document.getElementById("pd_t").value,f=document.getElementById("pd_f"),s=document.getElementById("pd_s"),p=document.getElementById("pd_p"),ok=document.getElementById("pd_ok");
+ if(!t.trim()){s.innerHTML="";p.innerHTML="";ok.disabled=true;PD.res=null;return}
+ const r=PD.kind=="nego"?parseNegoPaste(t,f?f.checked:true):parseTimPaste(t);PD.res=r;
+ if(r.err){s.innerHTML=msg(r.err);p.innerHTML="";ok.disabled=true;return}
+ ok.disabled=false;s.innerHTML=msg(`Terbaca <b>${r.nSec}</b> bagian dan <b>${r.nItem}</b> baris pekerjaan.${r.warn.length?` ${r.warn.length} baris dilewati.`:""}`,"ok")+(r.warn.length?`<details style="font-size:12px;margin-top:4px"><summary>Lihat baris yang dilewati</summary>${r.warn.slice(0,15).map(E).join("<br>")}</details>`:"");
+ let rows="";
+ if(PD.kind=="nego")r.data.forEach(sec=>{rows+=`<tr class=sc><td colspan=7><b>${E(sec.t)}</b></td></tr>`;sec.items.slice(0,6).forEach((it,j)=>rows+=`<tr><td>${j+1}</td><td>${E(it.u)}</td><td class=r>${it.v}</td><td>${E(it.s)}</td><td class=r>${nf(it.h)}</td><td class=r>${nf(it.p)}</td><td class=r>${nf(it.n)}</td></tr>`);if(sec.items.length>6)rows+=`<tr><td colspan=7><i>… +${sec.items.length-6} baris lainnya</i></td></tr>`});
+ else r.data.slice(0,16).forEach(x=>rows+=x.k=="sec"?`<tr class=sc><td colspan=6><b>${E(x.n)} ${E(x.t)}</b></td></tr>`:`<tr><td>${E(x.n)}</td><td>${E(x.u)}</td><td class=r>${x.v}</td><td>${E(x.s)}</td><td class=r>${nf(x.h)}</td><td class=r>${nf(x.p)}</td></tr>`);
+ p.innerHTML=`<table class=tb><tr>${PD.kind=="nego"?"<th>No</th><th>Uraian</th><th>Vol</th><th>Sat</th><th>Harga Sat. HPS</th><th>Harga Sat. Penawaran</th><th>Harga Sat. Nego</th>":"<th>No</th><th>Uraian</th><th>Qty</th><th>Sat</th><th>Harga Sat. HPS</th><th>Harga Sat. Penawaran</th>"}</tr>${rows}</table>`}
+function pdApply(){const r=PD.res;if(!r||r.err)return;const app=document.querySelector("input[name=pd_m]:checked").value=="append";
+ if(PD.kind=="nego"){S.nego=app?S.nego.concat(r.data):r.data;const c=document.querySelector("[data-comp=nego]");if(c)renderNego(c)}
+ else{S.tim=app?S.tim.concat(r.data):r.data;const c=document.querySelector("[data-comp=tim]");if(c)renderTim(c)}
+ document.getElementById("pdlg").remove();sv();toast(`${r.nItem} baris dari Excel berhasil ditempel`)}
+/* Ctrl+V langsung di dalam tabel: jika isi berupa beberapa sel/baris -> buka dialog */
+document.addEventListener("paste",e=>{
+ const t=e.target;if(!t||!t.closest)return;const box=t.closest("[data-comp=nego],[data-comp=tim]");if(!box)return;
+ const txt=(e.clipboardData||window.clipboardData).getData("text");if(!/[\t\n]/.test(txt.trim()))return;
+ e.preventDefault();pasteDlg(box.dataset.comp=="nego"?"nego":"tim",txt)});
 
 /* =====================================================================
    BAGIAN 3 — Akun (login / daftar / lupa password / admin), pilihan mode, boot
@@ -1118,17 +1230,19 @@ async function load(){try{let d=null;if(db){const s=await DOCREF().get();if(s.ex
    Registri proyek: users/{uid}/projects/{id}  (ringkasan, cepat dimuat)
    Data kertas kerja: users/{uid}/paket/{id} (PL) atau users/{uid}/tender/{id} (Tender)
    ===================================================================== */
-let PROJ=[],INPROJ=false,DF={q:"",t:"",s:"upd"};
+let PROJ=[],INPROJ=false,DF={q:"",t:"",j:"",s:"date",d:"upd",o:"desc"};
+const JNORD=["PK","B","JL","JKK","JKNK"];
+const tglPaket=t=>{t=t||{};const f=t["UND-REV"];if(f&&f.tgl)return f.tgl;for(const k in t)if(t[k]&&t[k].tgl)return t[k].tgl;return""};
 const PK=()=>"kk_proj_"+CURU.u;
 const lsKey=(type,id)=>(type=="TN"?"tn_":"pl_")+(AUTH?"":CURU.u+"_")+id;
 const rpS=n=>"Rp "+Math.round(n||0).toLocaleString("id-ID");
 const ago=t=>{const d=Date.now()-t,m=Math.round(d/6e4);return m<1?"baru saja":m<60?m+" menit lalu":m<1440?Math.round(m/60)+" jam lalu":Math.round(m/1440)+" hari lalu"};
 function progress(){let t=0,f=0;FIELDS.forEach(([g,fs])=>fs.forEach(([k])=>{t++;const v=S.b[k];if(v!==""&&v!=null&&v!==0)f++}));return t?Math.round(f/t*100):0}
-const metaFrom=(type,d,id)=>{const b=(d&&d.b)||{};return{type,name:b.paket||id,kode:b.spse||"",satker:b.satker||"",hps:+b.hps||0,pagu:+b.pagu||0,ta:b.ta||"",updated:Date.now(),done:0}};
+const metaFrom=(type,d,id)=>{const b=(d&&d.b)||{};return{type,jenis:b.jenis||"",tgl:tglPaket(d&&d.t),name:b.paket||id,kode:b.spse||"",satker:b.satker||"",hps:+b.hps||0,pagu:+b.pagu||0,ta:b.ta||"",updated:Date.now(),done:0}};
 
 /* ---- simpan (data + ringkasan proyek) ---- */
 async function metaWrite(extra){
- const m={type:MODE,name:S.b.paket||"(Tanpa nama)",kode:S.b.spse||"",satker:S.b.satker||"",hps:+S.b.hps||0,pagu:+S.b.pagu||0,ta:S.b.ta||"",updated:Date.now(),done:progress(),...(extra||{})};
+ const m={type:MODE,jenis:S.b.jenis||"",tgl:tglPaket(S.t),name:S.b.paket||"(Tanpa nama)",kode:S.b.spse||"",satker:S.b.satker||"",hps:+S.b.hps||0,pagu:+S.b.pagu||0,ta:S.b.ta||"",updated:Date.now(),done:progress(),...(extra||{})};
  if(AUTH)await db.collection("users").doc(CURU.uid).collection("projects").doc(pid).set(m,{merge:true});
  else{const L=JSON.parse(localStorage.getItem(PK())||"[]"),i=L.findIndex(p=>p.id==pid);if(i>=0)L[i]={...L[i],...m};else L.push({id:pid,created:Date.now(),...m});localStorage.setItem(PK(),JSON.stringify(L))}}
 async function saveNow(extra){clearTimeout(timer);if(!INPROJ&&!extra)return;const el=document.getElementById("st2")||document.getElementById("st");
@@ -1142,7 +1256,15 @@ async function load(){await loadData();render()}
 async function projLoad(){
  PROJ=[];
  if(AUTH){const s=await db.collection("users").doc(CURU.uid).collection("projects").get();s.forEach(d=>PROJ.push({id:d.id,...d.data()}));if(!PROJ.length)await projDiscover()}
- else{PROJ=JSON.parse(localStorage.getItem(PK())||"[]");if(!PROJ.length)projDiscoverLocal()}}
+ else{PROJ=JSON.parse(localStorage.getItem(PK())||"[]");if(!PROJ.length)projDiscoverLocal()}
+ await projBackfill()}
+async function projBackfill(){ /* proyek lama tanpa jenis/tanggal -> lengkapi dari datanya */
+ for(const p of PROJ){if(p.jenis&&p.tgl!==undefined)continue;let d=null;
+  try{if(AUTH){const r=await db.collection("users").doc(CURU.uid).collection(p.type=="TN"?"tender":"paket").doc(p.id).get();if(r.exists)d=r.data()}
+   else{const r=localStorage.getItem(lsKey(p.type,p.id))||localStorage.getItem((p.type=="TN"?"tn_":"pl_")+p.id);if(r)d=JSON.parse(r)}}catch(e){}
+  if(!d||!d.b)continue;p.jenis=d.b.jenis||"";p.tgl=tglPaket(d.t);
+  try{if(AUTH)await db.collection("users").doc(CURU.uid).collection("projects").doc(p.id).set({jenis:p.jenis,tgl:p.tgl},{merge:true})}catch(e){}}
+ if(!AUTH)localStorage.setItem(PK(),JSON.stringify(PROJ))}
 async function projDiscover(){ /* data lama (sebelum ada dashboard) -> daftarkan otomatis */
  for(const [coll,type] of [["paket","PL"],["tender","TN"]]){let s;try{s=await db.collection("users").doc(CURU.uid).collection(coll).get()}catch(e){continue}
   const arr=[];s.forEach(d=>arr.push([d.id,d.data()]));
@@ -1169,26 +1291,44 @@ function dashDraw(){
 ${top.length?`<div class=dpanel><h3>Nilai HPS — 5 proyek terbesar</h3>${top.map(p=>`<div class=hb><span title="${E(p.name)}">${E(p.name)}</span><div><i class="${p.type}" style="width:${Math.max(2,(p.hps||0)/mx*100)}%"></i></div><em>${rpS(p.hps)}</em></div>`).join("")}</div>`:""}
 <div class=dbar><input id=dq placeholder="Cari nama paket / kode / satker…" value="${E(DF.q)}" oninput="DF.q=this.value;dashGrid()">
 <div class=chips>${[["","Semua"],["PL","Pengadaan Langsung"],["TN","Tender"]].map(([v,l])=>`<button class="chip ${DF.t==v?"on":""}" onclick="DF.t='${v}';dashDraw()">${l}</button>`).join("")}</div>
-<select onchange="DF.s=this.value;dashGrid()"><option value=upd ${DF.s=="upd"?"selected":""}>Terbaru diubah</option><option value=name ${DF.s=="name"?"selected":""}>Nama A–Z</option><option value=hps ${DF.s=="hps"?"selected":""}>Nilai HPS terbesar</option></select>
-<button class=btn onclick="dashNew()">＋ Proyek Baru</button></div><div id=dgrid></div></div>`;
+<button class=btn onclick="dashNew()">＋ Proyek Baru</button></div>
+<div class=dbar><span class=lbl>Jenis Pengadaan</span><div class=chips>${[["","Semua"],...JNORD.map(j=>[j,j])].map(([v,l])=>{const c=v?all.filter(p=>p.jenis==v).length:all.length;return`<button class="chip jn ${DF.j==v?"on":""}" title="${v?JENIS[v]:"Semua jenis"}" onclick="DF.j='${v}';dashDraw()">${l} <em>${c}</em></button>`}).join("")}</div></div>
+<div class=dbar><span class=lbl>Urutkan</span><select onchange="DF.s=this.value;dashGrid()"><option value=date ${DF.s=="date"?"selected":""}>Tanggal</option><option value=jenis ${DF.s=="jenis"?"selected":""}>Jenis Pengadaan (lalu tanggal)</option><option value=name ${DF.s=="name"?"selected":""}>Nama A–Z</option><option value=hps ${DF.s=="hps"?"selected":""}>Nilai HPS terbesar</option></select>
+<span class=lbl>Tanggal</span><select onchange="DF.d=this.value;dashGrid()"><option value=upd ${DF.d=="upd"?"selected":""}>Terakhir diubah</option><option value=tgl ${DF.d=="tgl"?"selected":""}>Tanggal paket (undangan)</option><option value=cr ${DF.d=="cr"?"selected":""}>Tanggal dibuat</option></select>
+<select onchange="DF.o=this.value;dashGrid()"><option value=desc ${DF.o=="desc"?"selected":""}>Terbaru → terlama</option><option value=asc ${DF.o=="asc"?"selected":""}>Terlama → terbaru</option></select></div>
+<div id=dgrid></div></div>`;
  dashGrid()}
 function dashGrid(){const g=document.getElementById("dgrid");if(!g)return;const q=DF.q.toLowerCase();
- let L=PROJ.filter(p=>(!DF.t||p.type==DF.t)&&(!q||[p.name,p.kode,p.satker].join(" ").toLowerCase().includes(q)));
- L.sort(DF.s=="name"?(x,y)=>String(x.name).localeCompare(y.name):DF.s=="hps"?(x,y)=>(y.hps||0)-(x.hps||0):(x,y)=>(y.updated||0)-(x.updated||0));
- g.innerHTML=L.length?`<div class=pgrid>${L.map(p=>`<div class="pcard ${p.type}"><div class=ph><span class="tag ${p.type=="TN"?"tn":""}">${p.type=="TN"?"Tender":"Pengadaan Langsung"}</span><small>${p.updated?ago(p.updated):""}</small></div><h4>${E(p.name)}</h4><div class=pm>${E(p.satker||"—")}${p.ta?" · TA "+E(p.ta):""}</div><div class=pm>Kode: ${E(p.kode||"—")}</div><div class=pv>${rpS(p.hps)}<small> HPS</small></div><div class=bar><i style="width:${p.done||0}%"></i></div><small class=pm>Kelengkapan data ${p.done||0}%</small>
-<div class=pa><button class=btn onclick="openProject('${E(p.id)}')">Buka</button><button class="btn o" onclick="dupProj('${E(p.id)}')">Duplikat</button><button class="btn d" onclick="delProj('${E(p.id)}')">Hapus</button></div></div>`).join("")}</div>`
- :`<div class=dempty><div style="font-size:42px">📁</div><b>${PROJ.length?"Tidak ada proyek yang cocok":"Belum ada proyek"}</b><p>${PROJ.length?"Ubah kata kunci atau filter.":"Klik <b>＋ Proyek Baru</b> untuk memulai kertas kerja Pengadaan Langsung atau Tender."}</p></div>`}
+ let L=PROJ.filter(p=>(!DF.t||p.type==DF.t)&&(!DF.j||p.jenis==DF.j)&&(!q||[p.name,p.kode,p.satker,p.jenis].join(" ").toLowerCase().includes(q)));
+ const dv=p=>DF.d=="tgl"?(Date.parse(p.tgl)||0):DF.d=="cr"?(p.created||0):(p.updated||0),sg=DF.o=="asc"?1:-1,cd=(x,y)=>sg*(dv(x)-dv(y)),jo=p=>{const i=JNORD.indexOf(p.jenis);return i<0?99:i};
+ L.sort(DF.s=="name"?(x,y)=>String(x.name).localeCompare(y.name):DF.s=="hps"?(x,y)=>(y.hps||0)-(x.hps||0):DF.s=="jenis"?(x,y)=>jo(x)-jo(y)||cd(x,y):cd);
+ const card=p=>`<div class="pcard ${p.type}"><div class=ph><span class=tg2><span class="tag ${p.type=="TN"?"tn":""}">${p.type=="TN"?"Tender":"Pengadaan Langsung"}</span><span class="tag jn" title="${E(JENIS[p.jenis]||"Jenis belum diisi")}">${E(p.jenis||"—")}</span></span><small>${p.updated?ago(p.updated):""}</small></div><h4>${E(p.name)}</h4><div class=pm>${E(JENIS[p.jenis]||"Jenis belum diisi")}</div><div class=pm>${E(p.satker||"—")}${p.ta?" · TA "+E(p.ta):""}</div><div class=pm>Kode: ${E(p.kode||"—")}${p.tgl?" · Tgl paket: "+E(fd(p.tgl)):""}</div><div class=pv>${rpS(p.hps)}<small> HPS</small></div><div class=bar><i style="width:${p.done||0}%"></i></div><small class=pm>Kelengkapan data ${p.done||0}%</small>
+<div class=pa><button class=btn onclick="openProject('${E(p.id)}')">Buka</button><button class="btn o" onclick="dupProj('${E(p.id)}')">Duplikat</button><button class="btn d" onclick="delProj('${E(p.id)}')">Hapus</button></div></div>`;
+ if(!L.length){g.innerHTML=`<div class=dempty><div style="font-size:42px">📁</div><b>${PROJ.length?"Tidak ada proyek yang cocok":"Belum ada proyek"}</b><p>${PROJ.length?"Ubah kata kunci atau filter.":"Klik <b>＋ Proyek Baru</b> untuk memulai kertas kerja Pengadaan Langsung atau Tender."}</p></div>`;return}
+ if(DF.s=="jenis"){let h="",last="#";L.forEach(p=>{const k=p.jenis||"";if(k!==last){if(last!=="#")h+="</div>";const n=L.filter(x=>(x.jenis||"")==k).length;h+=`<h3 class=jh><span class="tag jn">${E(k||"—")}</span> ${E(JENIS[k]||"Jenis belum diisi")} <em>${n}</em></h3><div class=pgrid>`;last=k}h+=card(p)});g.innerHTML=h+"</div>"}
+ else g.innerHTML=`<div class=pgrid>${L.map(card).join("")}</div>`}
 
 /* ---- aksi ---- */
 function enterApp(){document.body.classList.remove("noapp");const a=$("#auth");a.className="";a.innerHTML=""}
 async function openProject(id){const m=PROJ.find(p=>p.id==id);if(!m)return;applyMode(m.type);pid=id;S=freshS(PROF());INPROJ=true;enterApp();await load()}
 function openShell(t){applyMode(localStorage.getItem("kk_mode")||"PL");INPROJ=false;enterApp();go(t)}
 async function toDash(){await saveNow();INPROJ=false;showDash()}
-function dashNew(){const d=document.createElement("div");d.className="dmodal";d.id="dmodal";
- d.innerHTML=`<div class=dbox><h3>Proyek Baru</h3><label>Jenis pengadaan</label><select id=np_t><option value=PL>Pengadaan Langsung (Pejabat Pengadaan)</option><option value=TN>Tender (Pokja Pemilihan)</option></select><label>Nama paket pekerjaan</label><input id=np_n placeholder="mis. Rehabilitasi Jalan …"><div id=np_m></div><div style="display:flex;gap:8px;margin-top:16px"><button class=btn onclick="createProject()">Buat &amp; Buka</button><button class="btn o" onclick="document.getElementById('dmodal').remove()">Batal</button></div><p class=badge style="margin-top:10px">Proyek baru memakai data bawaan sebagai contoh isian — ubah di tab Bank Data.</p></div>`;
- document.body.appendChild(d);setTimeout(()=>document.getElementById("np_n").focus(),30)}
-async function createProject(){const type=gv("np_t"),name=gv("np_n");if(!name)return document.getElementById("np_m").innerHTML=msg("Nama paket wajib diisi.");
- applyMode(type);pid="p"+Date.now().toString(36);S=freshS(PROF());S.b.paket=name;if(type=="TN")S.b.kegiatan=name;
+let NP={step:1,type:"",jenis:""};
+const NPT={PL:["Pejabat Pengadaan","Pengadaan Langsung","📄"],TN:["Pokja Pemilihan","Tender","🏗️"]};
+function dashNew(){NP={step:1,type:"",jenis:""};let d=document.getElementById("dmodal");if(d)d.remove();d=document.createElement("div");d.className="dmodal";d.id="dmodal";document.body.appendChild(d);npDraw()}
+function npDraw(){const d=document.getElementById("dmodal");if(!d)return;
+ const crumb=`<div class=npsteps>${["Pelaksana","Jenis Pengadaan","Nama Paket"].map((t,i)=>`<span class="${NP.step==i+1?"on":NP.step>i+1?"done":""}"><b>${NP.step>i+1?"✓":i+1}</b> ${t}</span>`).join("")}</div>`;
+ const sum=(NP.type?`<span class="tag ${NP.type=="TN"?"tn":""}">${NPT[NP.type][0]}</span> `:"")+(NP.jenis?`<span class="tag jn">${NP.jenis}</span> <small>${E(JENIS[NP.jenis])}</small>`:"");
+ let body="";
+ if(NP.step==1)body=`<p class=badge style="margin:0 0 10px">Siapa pelaksana pemilihan penyedia pada proyek ini?</p><div class=mcards style="padding:0">${["PL","TN"].map(t=>`<button class=mcard onclick="npPick('type','${t}')"><div class=ic>${NPT[t][2]}</div><b>${NPT[t][0]}</b><small>${t=="PL"?"Pengadaan Langsung — dokumen dibuat dan ditandatangani oleh Pejabat Pengadaan.":"Tender — dokumen dibuat dan ditandatangani oleh Pokja Pemilihan."}</small></button>`).join("")}</div>`;
+ else if(NP.step==2)body=`<p class=badge style="margin:0 0 10px">Pilih jenis pengadaan. Pilihan ini menentukan template Lampiran Reviu, kualifikasi, dan kode di nomor surat.</p><div class=jgrid>${JNORD.map(j=>`<button class=jcard onclick="npPick('jenis','${j}')"><span class="tag jn">${j}</span><b>${E(JENIS[j])}</b></button>`).join("")}</div><div style="margin-top:14px"><button class="btn o" onclick="npBack()">← Kembali</button></div>`;
+ else body=`<div style="margin-bottom:8px">${sum}</div><label>Nama paket pekerjaan</label><input id=np_n placeholder="mis. Rehabilitasi Jalan …" onkeydown="if(event.key=='Enter')createProject()"><div id=np_m></div><div style="display:flex;gap:8px;margin-top:16px"><button class="btn o" onclick="npBack()">← Kembali</button><button class=btn onclick="createProject()">Buat &amp; Buka</button></div><p class=badge style="margin-top:10px">Proyek baru memakai data bawaan sebagai contoh isian — ubah di tab Bank Data.</p>`;
+ d.innerHTML=`<div class=dbox style="max-width:560px"><div style="display:flex;justify-content:space-between;align-items:center"><h3 style="margin:0">Proyek Baru</h3><button class="btn o" style="padding:3px 10px" onclick="document.getElementById('dmodal').remove()">✕</button></div>${crumb}${body}</div>`;
+ const n=document.getElementById("np_n");if(n)setTimeout(()=>n.focus(),30)}
+function npPick(k,v){NP[k]=v;NP.step=k=="type"?2:3;npDraw()}
+function npBack(){NP.step=Math.max(1,NP.step-1);npDraw()}
+async function createProject(){const type=NP.type,name=gv("np_n");if(!type||!NP.jenis)return;if(!name)return document.getElementById("np_m").innerHTML=msg("Nama paket wajib diisi.");
+ applyMode(type);pid="p"+Date.now().toString(36);S=freshS(PROF());S.b.paket=name;S.b.jenis=NP.jenis;if(type=="TN")S.b.kegiatan=name;
  INPROJ=true;await saveNow({created:Date.now()});document.getElementById("dmodal").remove();enterApp();tab="bank";render()}
 async function dupProj(id){const m=PROJ.find(p=>p.id==id);if(!m)return;applyMode(m.type);pid=id;S=freshS(PROF());await loadData();
  pid="p"+Date.now().toString(36);S.b.paket=(S.b.paket||m.name)+" (Salinan)";INPROJ=true;await saveNow({created:Date.now()});INPROJ=false;showDash()}
