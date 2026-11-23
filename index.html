@@ -207,6 +207,42 @@ body.noapp #top,body.noapp #wrap{display:none}
 .ltab tr.jhr td{background:var(--in);font-size:13px}.ltab tr.jhr em{font-style:normal;color:var(--mu)}
 .plink{color:var(--ac);font-weight:600;cursor:pointer}.plink:hover{text-decoration:underline}
 .ltab .pm{color:var(--mu);font-size:12px}.ltab .tag{white-space:nowrap}
+
+.nego tr.lv1 td{background:#d6e2f3}.nego tr.lv2 td{background:#e6eef9}.nego tr.lv3 td{background:#f2f5fa}
+.nego tr.hdi td{font-style:italic;background:#fbfbfd}.nego tr.hdi input{font-style:italic}
+@media print{.nego tr.lv1 td,.nego tr.lv2 td,.nego tr.lv3 td{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+
+/* ===== Perbaikan v5 ===== */
+/* dashboard: header tetap, hanya isi (content) yang bergulir */
+#auth.dash{overflow:hidden}
+.dwrap{height:100%;display:flex;flex-direction:column;padding-bottom:0}
+.dtop{flex:none}
+.dscroll{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding:0 8px 60px 0;margin-right:-8px;scrollbar-gutter:stable}
+/* sidebar berwarna per kelompok menu */
+#side{background:linear-gradient(180deg,var(--sf),var(--in))}
+#side .grp{display:flex;align-items:center;gap:7px;color:color-mix(in srgb,var(--gc,var(--ac)) 72%,var(--tx));font-weight:700}
+#side .grp::before{content:"";width:9px;height:9px;border-radius:3px;background:var(--gc,var(--ac));flex:none}
+#side button.t .n{background:color-mix(in srgb,var(--gc,var(--ac)) 18%,var(--sf));color:color-mix(in srgb,var(--gc,var(--ac)) 72%,var(--tx))}
+#side button.t:hover{background:color-mix(in srgb,var(--gc,var(--ac)) 10%,var(--sf))}
+#side button.t.on{background:color-mix(in srgb,var(--gc,var(--ac)) 17%,var(--sf));border-left-color:var(--gc,var(--ac));color:color-mix(in srgb,var(--gc,var(--ac)) 72%,var(--tx));font-weight:600}
+#side button.t.on .n{background:var(--gc,var(--ac));color:#fff}
+#side .foot .pn{font-weight:600;color:var(--tx);word-break:break-word;padding:6px 8px;border-radius:6px;background:var(--acs);border-left:3px solid var(--ac)}
+/* Lampiran Nego: uraian otomatis wrap + kontrol lebar */
+.nego textarea.ur{display:block;width:100%;border:0;border-bottom:1px dotted #999;background:transparent;color:#000;padding:1px 2px;margin:0;font:inherit;line-height:1.3;resize:none;overflow:hidden;border-radius:0;white-space:pre-wrap;overflow-wrap:anywhere;height:auto}
+.nego.nowrap textarea.ur{white-space:pre;overflow-wrap:normal}
+.nego .rzhint{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center}
+.nego .rzhint .rzctl{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center}
+.nego .rzhint label{display:inline-flex;align-items:center;gap:6px;margin:0;font:11.5px Arial;color:#334155}
+.nego .rzhint input{width:auto;border:0;background:none;padding:0;vertical-align:middle;cursor:pointer}
+.nego .rzhint input[type=range]{width:150px}
+.nego .acts.top{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px}
+.nego .acts.top .mini{font-size:12.5px;padding:5px 11px}
+.nego tr.rzr td{overflow:visible;height:12px}
+.nego tr.rzr td i{width:11px;right:-5px}
+.nego tr.nl td{text-align:center;color:#64748b;font-style:italic;padding:10px}
+@media print{.nego.nowrap textarea.ur{overflow:hidden}.nego .acts.top{display:none!important}}
+.skrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+.skrow select{text-overflow:ellipsis}
 </style></head><body class="noapp">
 <header id="top"></header>
 <div id="wrap"><nav id="side"></nav><main id="main"></main></div>
@@ -228,13 +264,13 @@ let NAV=[
 ];
 let TITLES={};
 let CALC={};
-let STG=["UND-REV","BA-REV","BA-OP","BA-EP","BA-KPK","BA-KN","LAMP-N","ABS","BA-PEM","BAHP"];
+let STG=["UND-REV","BA-REV","DOK-PEM","BA-OP","BA-EP","BA-KPK","BA-KN","LAMP-N","ABS","BA-PEM","BAHP"];
 const JENIS={B:"Barang",JL:"Jasa Lainnya",PK:"Pekerjaan Konstruksi",JKK:"Jasa Konsultansi Konstruksi",JKNK:"Jasa Konsultansi Non Konstruksi"};
-let URUT={"UND-REV":"01","BA-REV":"02","BA-OP":"04","BA-EP":"05","BA-KPK":"06","BA-KN":"07","BA-PEM":"08","BAHP":"09"};
+let URUT={"UND-REV":"01","BA-REV":"02","DOK-PEM":"03","BA-OP":"04","BA-EP":"05","BA-KPK":"06","BA-KN":"07","BA-PEM":"08","BAHP":"09"};
 let JV={"BA-KPK":1,"LAMP-REV":1};            // dokumen yang templatenya mengikuti jenis pengadaan
 let LAND={"LAMP-N":1};                        // dokumen berorientasi landscape
 let FIELDS=[
-["Informasi Paket",[["jenis","Jenis Pengadaan (kode dipakai di nomor surat & memilih template)","sel:B|JL|PK|JKK|JKNK"],["bentuk","Bentuk Kontrak"],["jenisK","Jenis Kontrak"],["rup","Kode RUP"],["spse","Kode Paket SPSE"],["paket","Nama Paket Pekerjaan"],["inisial","Inisial Paket (nomor surat)"],["lokasi","Lokasi Pekerjaan"],["dana","Sumber Dana"],["ta","Tahun Anggaran"],["pagu","Pagu Anggaran (Rp)","num"],["hps","HPS (Rp)","num"],["waktu","Jangka Waktu Pelaksanaan"],["berlaku","Masa Berlaku Surat Penawaran"]]],
+["Informasi Paket",[["jenis","Jenis Pengadaan (kode dipakai di nomor surat & memilih template)","sel:B|JL|PK|JKK|JKNK"],["bentuk","Bentuk Kontrak","selx:Surat Perintah Kerja (SPK)"],["jenisK","Jenis Kontrak","selx:Lumsum|Harga Satuan|Gabungan Lumsum dan Harga Satuan|Waktu Penugasan"],["rup","Kode RUP"],["spse","Kode Paket SPSE"],["paket","Nama Paket Pekerjaan"],["inisial","Inisial Paket (nomor surat)"],["lokasi","Lokasi Pekerjaan"],["dana","Sumber Dana"],["ta","Tahun Anggaran"],["pagu","Pagu Anggaran (Rp)","num"],["hps","HPS (Rp)","num"],["waktu","Jangka Waktu Pelaksanaan"],["berlaku","Masa Berlaku Surat Penawaran"]]],
 ["Satuan Kerja & Kop Surat",[["satker","Nama Satker"],["ini","Inisial Satker"],["kop1","Kop baris 1 (alamat/telp)"],["kop2","Kop baris 2 (web/email)"],["kota","Kota"],["pos","Kode Pos"]]],
 ["Pelaku Pengadaan",[["ppk","Nama PPK"],["ppkNip","NIP PPK"],["pp","Nama Pejabat Pengadaan"],["ppNip","NIP Pejabat Pengadaan"],["ppJab","Jabatan Pejabat Pengadaan"]]],
 ["Peserta PL / Penyedia",[["pNama","Nama Peserta"],["pNpwp","NPWP"],["pAlamat","Alamat"],["pPim","Nama Pimpinan"],["pJab","Jabatan Pimpinan"],["hTawar","Harga Penawaran","num"],["hKoreksi","Penawaran Terkoreksi","num"],["hNego","Harga Negosiasi","num"],["hBulat","Negosiasi Pembulatan","num"]]],
@@ -413,7 +449,7 @@ function renderNego(el){
 <p><b>REKAPITULASI</b></p><table style="width:70%"><tr><th style="width:10mm">No.</th><th>Uraian</th><th>Harga Perkiraan Sendiri</th><th>Harga Penawaran</th><th>Harga Negosiasi</th></tr>`;
  S.nego.forEach((s,i)=>{h+=`<tr><td style="text-align:center">${ROM[i+1]||i+1}</td><td>${E(s.t)}</td><td class=r data-c="rh.${i}"></td><td class=r data-c="rp.${i}"></td><td class=r data-c="rn.${i}"></td></tr>`});
  h+=`<tr class=sc><td colspan=2 class=r style="text-align:right">Jumlah Total</td><td class=r data-c="th2"></td><td class=r data-c="tp2"></td><td class=r data-c="tn2"></td></tr></table></div>`;
- el.innerHTML=h;calcNego(el);
+ el.innerHTML=h;calcNego(el);autoGAll();setTimeout(autoGAll,80);
 }
 function calcNego(root){
  root=root||document;const set=(k,v)=>root.querySelectorAll(`[data-c="${k}"]`).forEach(e=>e.textContent=nf(v));
@@ -512,9 +548,9 @@ function toolbar(){
 function topbar(){$("#top").innerHTML=`<button onclick="togSide()" title="Menu">☰</button><img class=lg src="${LOGO}" alt="Logo Pemerintah Kota Surakarta"><div class=tt><b>Kertas Kerja Pengadaan Langsung</b><small>BPBJ Kota Surakarta · Pejabat Pengadaan</small></div><span class=sp></span><span class=chip title="${E(S.b.paket)}">${E(S.b.spse)} · ${E(S.b.paket)}</span><button onclick="togTheme()">${document.documentElement.dataset.theme=="dark"?"☀ Terang":"🌙 Gelap"}</button>`}
 function side(){$("#side").innerHTML=NAV.map(([g,a])=>`<div class=grp>${g}</div>`+a.map(([k,l,n])=>`<button class="t ${n=="sub"?"sub":""} ${k==tab?"on":""}" onclick="go('${k}')">${n=="sub"?"↳":`<span class=n>${n}</span>`}<span>${l}</span></button>`).join("")).join("")+`<div class=foot><label>ID Paket (Firebase)</label><input value="${E(pid)}" onchange="pid=this.value;load()"><div style="margin-top:8px" class=badge id=st>${db?"Firebase aktif":"Mode lokal (belum ada config Firebase)"}</div></div>`}
 function go(k){tab=k;render();scrollTo(0,0);if(innerWidth<900)document.body.classList.add("min")}
-function bank(){const b=S.b;return `<div class=crumb>Beranda / Data Paket</div><div class=ptitle><h2>Bank Data</h2><span class=badge id=st2>Tersimpan otomatis</span></div>`+FIELDS.map(([g,fs])=>`<div class=card><h3>${g}</h3><div class=bd><div class=grid>${fs.map(([k,l,ty])=>ty&&ty.startsWith("sel")?`<div><label>${l}</label><select onchange="S.b.${k}=this.value;bchg()">${ty.slice(4).split("|").map(o=>`<option value="${o}" ${o==b[k]?"selected":""}>${JENIS[o]?o+" — "+JENIS[o]:o}</option>`).join("")}</select></div>`:ty=="area"?`<div style="grid-column:1/-1"><label>${l}</label><textarea rows=4 oninput="S.b.${k}=this.value;bchg()">${E(b[k])}</textarea></div>`:`<div><label>${l}</label><input ${ty=="num"?"type=number step=any":""} value="${E(b[k])}" oninput="S.b.${k}=${ty=="num"?"+this.value":"this.value"};bchg()"></div>`).join("")}</div>${g=="Informasi Paket"?`<p class=badge id=terbp>Terbilang Pagu: ${terb(b.pagu)}<br>Terbilang HPS: ${terb(b.hps)}</p><p class=badge>Template <b>BA Pembuktian Kualifikasi</b> dan <b>Lampiran Reviu</b> mengikuti jenis pengadaan ini (sheet LDK / LAMPREVIU(${b.jenis}) di Excel).</p>`:""}</div></div>`).join("")+`<div class=card><h3>Dokumentasi PL — Nomor & Tanggal Tahapan</h3><div class=bd style="overflow:auto"><table class=tb><tr><th>Tahapan</th><th>Urut</th><th>Tanggal</th><th>Tanggal Acara</th><th>Jam</th><th>Nomor Surat</th></tr>${STG.map(k=>{const t=S.t[k]||(S.t[k]={tgl:"",acara:"",jam:"",urut:""});return `<tr><td>${TITLES[k][0]}</td><td><input style="width:56px" value="${E(t.urut)}" oninput="S.t['${k}'].urut=this.value;bchg()"></td><td><input type=date value="${t.tgl}" oninput="S.t['${k}'].tgl=this.value;bchg()" onchange="S.t['${k}'].tgl=this.value;bchg()"></td><td>${k=="UND-REV"?`<input type=date value="${t.acara}" oninput="S.t['${k}'].acara=this.value;bchg()">`:""}</td><td><input value="${E(t.jam)}" oninput="S.t['${k}'].jam=this.value;bchg()"></td><td class=no id="no-${k}">${URUT[k]?T(k).no:"—"}</td></tr>`}).join("")}</table></div></div>`}
+function bank(){const b=S.b;return `<div class=crumb>Beranda / Data Paket</div><div class=ptitle><h2>Bank Data</h2><span class=badge id=st2>Tersimpan otomatis</span></div>`+FIELDS.map(([g,fs])=>`<div class=card><h3>${g}</h3><div class=bd><div class=grid>${fs.map(([k,l,ty])=>ty&&ty.startsWith("sel")?`<div><label>${l}</label><select onchange="S.b.${k}=this.value;bchg()">${ty.slice(4).split("|").map(o=>`<option value="${o}" ${o==b[k]?"selected":""}>${JENIS[o]?o+" — "+JENIS[o]:o}</option>`).join("")}</select></div>`:ty=="area"?`<div style="grid-column:1/-1"><label>${l}</label><textarea rows=4 oninput="S.b.${k}=this.value;bchg()">${E(b[k])}</textarea></div>`:`<div><label>${l}</label><input ${ty=="num"?"type=number step=any":""} value="${E(b[k])}" oninput="S.b.${k}=${ty=="num"?"+this.value":"this.value"};bchg()"></div>`).join("")}</div>${g=="Informasi Paket"?`<p class=badge id=terbp>Terbilang Pagu: ${terb(b.pagu)}<br>Terbilang HPS: ${terb(b.hps)}</p><p class=badge>Template <b>BA Pembuktian Kualifikasi</b> dan <b>Lampiran Reviu</b> mengikuti jenis pengadaan ini (sheet LDK / LAMPREVIU(${b.jenis}) di Excel).</p>`:""}</div></div>`).join("")+`<div class=card><h3>Dokumentasi PL — Nomor & Tanggal Tahapan</h3><div class=bd style="overflow:auto"><table class=tb><tr><th>Tahapan</th><th>Urut</th><th>Tanggal</th><th>Tanggal Acara</th><th>Jam</th><th>Nomor Surat</th></tr>${STG.map(k=>{const t=S.t[k]||(S.t[k]={tgl:"",acara:"",jam:"",urut:URUT[k]||""});return `<tr><td>${TITLES[k][0]}</td><td><input style="width:56px" value="${E(t.urut)}" oninput="S.t['${k}'].urut=this.value;bchg()"></td><td><input type=date value="${t.tgl}" oninput="S.t['${k}'].tgl=this.value;bchg()" onchange="S.t['${k}'].tgl=this.value;bchg()"></td><td>${k=="UND-REV"?`<input type=date value="${t.acara}" oninput="S.t['${k}'].acara=this.value;bchg()">`:""}</td><td><input value="${E(t.jam)}" oninput="S.t['${k}'].jam=this.value;bchg()"></td><td class=no id="no-${k}">${URUT[k]?T(k).no:"—"}</td></tr>`}).join("")}</table></div></div>`}
 /* setiap perubahan Bank Data / tanggal: hitung ulang semua nomor surat langsung di tabel */
-function bchg(){STG.forEach(k=>{const c=document.getElementById("no-"+k);if(c)c.textContent=URUT[k]?T(k).no:"—"});const p=document.getElementById("terbp");if(p)p.innerHTML=`Terbilang Pagu: ${terb(S.b.pagu)}<br>Terbilang HPS: ${terb(S.b.hps)}`;const ch=document.querySelector("#top .chip");if(ch)ch.textContent=S.b.spse+" · "+S.b.paket;sv()}
+function bchg(){STG.forEach(k=>{const c=document.getElementById("no-"+k);if(c)c.textContent=URUT[k]?T(k).no:"—"});const p=document.getElementById("terbp");if(p)p.innerHTML=`Terbilang Pagu: ${terb(S.b.pagu)}<br>Terbilang HPS: ${terb(S.b.hps)}`;const sp=document.getElementById("sideProj");if(sp)sp.textContent=S.b.paket||"(Belum ada nama paket)";const ch=document.querySelector("#top .chip");if(ch)ch.textContent=S.b.spse+" · "+S.b.paket;sv()}
 function render(){topbar();side();const m=$("#main");
  if(tab=="bank"){m.innerHTML=bank();return}
  CUR=dkey(tab);const [ttl,grp]=TITLES[tab],has=S.ed[CUR]!=null,html=has?S.ed[CUR]:DOC[tab]();
@@ -623,38 +659,61 @@ DOC["ABS"]=()=>{
 <table class=ttd style="margin-top:8px"><tr><td style="width:55%"></td><td>Pejabat Pengadaan<div style="height:14mm"></div><b><u>${F("b.pp")}</u></b><br>NIP. ${F("b.ppNip")}</td></tr></table>`};
 
 /* ---------- 2) LAMPIRAN NEGOSIASI: kolom bisa diatur + format akuntansi Rp. xx.xxx.xxx,00 ---------- */
-const NG_DEF=[30,170,58,44,126,44,130,126,44,130,126,44,130,26], RK_DEF=[40,220,150,150,150];
-function cwGet(key,def){const a=(S.cw&&S.cw[key])||[];return def.map((w,i)=>a[i]>=20?a[i]:w)}
+const NG_DEF=[46,170,58,44,126,44,130,126,44,130,126,44,130,26], RK_DEF=[40,220,150,150,150];
+function cwGet(key,def){const a=(S.cw&&S.cw[key])||[],sc=(S.cws&&S.cws[key])||1;return def.map((w,i)=>Math.round((a[i]>=20?a[i]:w)*sc))}
 const cwSum=a=>a.reduce((x,y)=>x+y,0);
 const cwHtml=a=>`<colgroup>${a.map(w=>`<col style="width:${w}px">`).join("")}</colgroup>`;
 const rzRow=(n,extra=0)=>`<tr class="rzr noprint">${Array.from({length:n},(_,i)=>`<td><i data-ci=${i} title="Tarik untuk mengatur lebar kolom · klik ganda = ukuran awal"></i></td>`).join("")}${extra?`<td></td>`.repeat(extra):""}</tr>`;
-const rzHint=`<div class="rzhint noprint">📋 Bisa langsung Ctrl+V dari Excel (blok sel tabel). ↔ Tarik batang biru di atas judul kolom untuk melebarkan / menyempitkan kolom (klik ganda pada batang = kembali ke ukuran awal). <button class=mini onclick="cwReset()">Reset semua lebar kolom</button></div>`;
+const rzHintF=(keys,wrap)=>{const k0=keys.split(",")[0],sc=Math.round(((S.cws&&S.cws[k0])||1)*100);return `<div class="rzhint noprint"><span>📋 Ctrl+V dari Excel bisa langsung. ↔ Tarik batang biru di atas judul kolom untuk mengatur lebar kolom (klik ganda = ukuran awal).</span><div class=rzctl><label>Lebar tabel <input type=range min=40 max=200 step=5 value=${sc} oninput="cwScale('${keys}',this.value)"> <b id="cwsv_${k0}">${sc}%</b></label>${wrap?`<label><input type=checkbox ${S.nwrap===0?"":"checked"} onchange="negoWrap(this.checked)"> Bungkus teks Uraian (wrap)</label>`:""}<button class=mini onclick="cwReset()">Reset lebar</button></div></div>`};
+/* textarea Uraian (auto-tinggi bila wrap) & input angka 2 desimal */
+const ta=(i,j)=>`<textarea class="ur" rows=1 spellcheck=false data-i=${i} data-j=${j} data-k=u oninput="negoIn(this);autoG(this)" onkeydown="if(event.key=='Enter')event.preventDefault()">${E(S.nego[i].items[j].u)}</textarea>`;
+const dec=(i,j,k,pct)=>`<input class="nr dec" data-i=${i} data-j=${j} data-k=${k} value="${nf(pct?Math.round(S.nego[i].items[j][k]*10000)/100:S.nego[i].items[j][k])}" onfocus="monF(this)" onblur="monB(this)" oninput="negoIn(this)">`;
+function autoG(el){if(el.closest(".nego.nowrap")){el.style.height="";return}el.style.height="auto";el.style.height=(el.scrollHeight+1)+"px"}
+function autoGAll(){document.querySelectorAll(".nego textarea.ur").forEach(autoG)}
+let _agr=0;const autoGLater=()=>{if(_agr)return;_agr=requestAnimationFrame(()=>{_agr=0;autoGAll()})};
+function negoWrap(on){S.nwrap=on?1:0;document.querySelectorAll(".nego").forEach(n=>n.classList.toggle("nowrap",!on));autoGAll();sv()}
+function cwScale(keys,v){S.cws=S.cws||{};const nw=Math.max(.3,Math.min(3,v/100));
+ keys.split(",").forEach(key=>{const old=S.cws[key]||1;S.cws[key]=nw;
+  document.querySelectorAll('table[data-cw="'+key+'"]').forEach(t=>{const cols=[...t.querySelectorAll("col")];cols.forEach(c=>c.style.width=(parseFloat(c.style.width)*nw/old)+"px");t.style.width=cwSum(cols.map(c=>parseFloat(c.style.width)))+"px"})});
+ const l=document.getElementById("cwsv_"+keys.split(",")[0]);if(l)l.textContent=Math.round(v)+"%";autoGLater();sv()}
+function negoClear(){if(!confirm("Hapus seluruh isi tabel Lampiran Negosiasi? Tindakan ini tidak dapat dibatalkan."))return;S.nego=[];const c=nm();if(c)renderNego(c);sv()}
 const mon=(i,j,k)=>`<div class=ai><span>Rp.</span><input class="nr money" data-i=${i} data-j=${j} data-k=${k} value="${nf(S.nego[i].items[j][k])}" onfocus="monF(this)" onblur="monB(this)" oninput="negoIn(this)"></div>`;
 function monF(el){const v=pn(el.value);el.value=v?String(v).replace(".",","):"";el.select()}
 function monB(el){el.value=nf(pn(el.value))}
-function cwReset(){S.cw={};sv();const c=nm();if(c)renderNego(c);const t=document.querySelector("[data-comp=tim]");if(t&&typeof renderTim=="function")renderTim(t)}
+function cwReset(){S.cw={};S.cws={};sv();const c=nm();if(c)renderNego(c);const t=document.querySelector("[data-comp=tim]");if(t&&typeof renderTim=="function")renderTim(t)}
 
+/* nomor/label bagian: pakai label hasil tempel (I, II.1, A …) bila ada, selain itu romawi otomatis */
+function secLabel(i){const s=S.nego[i];if(s.n!=null)return null;let k=0;for(let x=0;x<=i;x++)if(S.nego[x].n==null)k++;return ROM[k]||k}
 function renderNego(el){
  S.cw=S.cw||{};const cw=cwGet("nego",NG_DEF),cr=cwGet("rekap",RK_DEF);
  const inp=(i,j,k,num)=>`<input ${num?`type=number step=any class=nr`:""} value="${E(num&&k.length<=2&&k[1]=="p"?Math.round(S.nego[i].items[j][k]*10000)/100:S.nego[i].items[j][k])}" data-i=${i} data-j=${j} data-k=${k} oninput="negoIn(this)">`;
- let h=`<div class=nego>${rzHint}<div class=nscroll><table data-cw=nego style="width:${cwSum(cw)}px">${cwHtml(cw)}${rzRow(13,1)}
+ const lab=i=>{const s=S.nego[i],r=secLabel(i);return r!=null?r:`<input value="${E(s.n)}" data-i=${i} data-k=n oninput="negoSec(this)" style="text-align:center;font-weight:bold">`};
+ let h=`<div class="nego${S.nwrap===0?" nowrap":""}"><div class="acts noprint top"><button class=mini onclick="pasteDlg('nego')">📋 Tempel dari Excel</button><button class="mini x" onclick="negoClear()">🗑 Hapus Tabel</button><button class=mini onclick="negoApply()">Terapkan total ke Bank Data (Harga Penawaran / Negosiasi)</button></div>${rzHintF("nego",1)}<div class=nscroll><table data-cw=nego style="width:${cwSum(cw)}px">${cwHtml(cw)}${rzRow(13,1)}
 <tr><th rowspan=2>No.</th><th rowspan=2>Uraian</th><th colspan=5>Harga Perkiraan Sendiri</th><th colspan=3>Harga Penawaran</th><th colspan=3>Harga Negosiasi</th><td class=noprint style="border:0"></td></tr>
 <tr><th>Vol.</th><th>Sat.</th><th>Harga Satuan (Rp)</th><th>Pajak (%)</th><th>Jumlah Harga (Rp)</th><th>Harga Satuan (Rp)</th><th>Pajak (%)</th><th>Jumlah Harga (Rp)</th><th>Harga Satuan (Rp)</th><th>Pajak (%)</th><th>Jumlah Harga (Rp)</th><td class=noprint style="border:0"></td></tr>`;
- S.nego.forEach((s,i)=>{
-  h+=`<tr class=sc><td style="text-align:center">${ROM[i+1]||i+1}</td><td colspan=12><input value="${E(s.t)}" data-i=${i} data-k=t oninput="negoSec(this)" style="font-weight:bold;width:60%"> <span class=noprint><button class=mini onclick="negoAdd(${i})">+ Baris</button><button class="mini x" onclick="negoDelSec(${i})">Hapus bagian</button></span></td><td class=noprint style="border:0"></td></tr>`;
-  s.items.forEach((it,j)=>{
-   h+=`<tr><td style="text-align:center">${j+1}</td><td>${inp(i,j,"u")}</td><td>${inp(i,j,"v",1)}</td><td>${inp(i,j,"s")}</td>
-<td>${mon(i,j,"h")}</td><td>${inp(i,j,"hp",1)}</td><td class=r data-c="h.${i}.${j}"></td>
-<td>${mon(i,j,"p")}</td><td>${inp(i,j,"pp",1)}</td><td class=r data-c="p.${i}.${j}"></td>
-<td>${mon(i,j,"n")}</td><td>${inp(i,j,"np",1)}</td><td class=r data-c="n.${i}.${j}"></td><td class=noprint style="border:0"><button class="mini x" title="Hapus baris" onclick="negoDel(${i},${j})">✕</button></td></tr>`});
+ S.nego.forEach((s,i)=>{const lv=s.lv||1;
+  h+=`<tr class="sc lv${lv}"><td style="text-align:center">${lab(i)}</td><td colspan=12><input value="${E(s.t)}" data-i=${i} data-k=t oninput="negoSec(this)" style="font-weight:bold;width:60%;margin-left:${(lv-1)*14}px"> <span class=noprint><button class=mini onclick="negoAdd(${i})">+ Baris</button><button class="mini x" onclick="negoDelSec(${i})">Hapus bagian</button></span></td><td class=noprint style="border:0"></td></tr>`;
+  s.items.forEach((it,j)=>{const no=it.no!=null?E(it.no):(j+1);
+   if(it.hd){h+=`<tr class=hdi><td style="text-align:center">${no}</td><td colspan=12>${ta(i,j)}</td><td class=noprint style="border:0"><button class="mini x" title="Hapus baris" onclick="negoDel(${i},${j})">✕</button></td></tr>`;return}
+   h+=`<tr><td style="text-align:center">${no}</td><td>${ta(i,j)}</td><td>${dec(i,j,"v")}</td><td>${inp(i,j,"s")}</td>
+<td>${mon(i,j,"h")}</td><td>${dec(i,j,"hp",1)}</td><td class=r data-c="h.${i}.${j}"></td>
+<td>${mon(i,j,"p")}</td><td>${dec(i,j,"pp",1)}</td><td class=r data-c="p.${i}.${j}"></td>
+<td>${mon(i,j,"n")}</td><td>${dec(i,j,"np",1)}</td><td class=r data-c="n.${i}.${j}"></td><td class=noprint style="border:0"><button class="mini x" title="Hapus baris" onclick="negoDel(${i},${j})">✕</button></td></tr>`});
  });
+ if(!S.nego.length)h+=`<tr class="nl noprint"><td colspan=13>Tabel kosong — klik “📋 Tempel dari Excel” atau “+ Tambah bagian” di bawah.</td></tr>`;
  h+=`<tr class=sc><td colspan=6 style="text-align:right">JUMLAH TOTAL BIAYA</td><td class=r data-c="th"></td><td colspan=2></td><td class=r data-c="tp"></td><td colspan=2></td><td class=r data-c="tn"></td><td class=noprint style="border:0"></td></tr></table></div>
-<div class="acts noprint"><button class=mini onclick="negoAddSec()">+ Tambah bagian (I, II, III …)</button><button class=mini onclick="pasteDlg('nego')">📋 Tempel dari Excel</button><button class=mini onclick="negoApply()">Terapkan total ke Bank Data (Harga Penawaran / Negosiasi)</button></div>
-<p><b>REKAPITULASI</b></p><div class=nscroll><table data-cw=rekap style="width:${cwSum(cr)}px">${cwHtml(cr)}${rzRow(5)}<tr><th>No.</th><th>Uraian</th><th>Harga Perkiraan Sendiri</th><th>Harga Penawaran</th><th>Harga Negosiasi</th></tr>`;
- S.nego.forEach((s,i)=>{h+=`<tr><td style="text-align:center">${ROM[i+1]||i+1}</td><td>${E(s.t)}</td><td class=r data-c="rh.${i}"></td><td class=r data-c="rp.${i}"></td><td class=r data-c="rn.${i}"></td></tr>`});
- h+=`<tr class=sc><td colspan=2 style="text-align:right">Jumlah Total</td><td class=r data-c="th2"></td><td class=r data-c="tp2"></td><td class=r data-c="tn2"></td></tr></table></div></div>`;
- el.innerHTML=h;calcNego(el);
+<div class="acts noprint"><button class=mini onclick="negoAddSec()">+ Tambah bagian</button></div>
+<p><b>REKAPITULASI</b></p><div class=nscroll><table data-cw=nego style="width:${cwSum(cw)}px">${cwHtml(cw)}<tr><th>No.</th><th colspan=5>Uraian</th><th>Harga Perkiraan Sendiri</th><th colspan=3>Harga Penawaran</th><th colspan=3>Harga Negosiasi</th></tr>`;
+ S.nego.forEach((s,i)=>{const lv=s.lv||1,r=secLabel(i),has=s.items.some(x=>!x.hd);
+  h+=`<tr class="${has?"":"lv"+lv}"><td style="text-align:center">${r!=null?r:E(s.n)}</td><td colspan=5 style="padding-left:${6+(lv-1)*14}px">${has?"":"<b>"}${E(s.t)}${has?"":"</b>"}</td>${has?`<td class=r data-c="rh.${i}"></td><td colspan=2></td><td class=r data-c="rp.${i}"></td><td colspan=2></td><td class=r data-c="rn.${i}"></td>`:"<td colspan=7></td>"}</tr>`});
+ h+=`<tr class=sc><td colspan=6 style="text-align:right">Jumlah Total</td><td class=r data-c="th2"></td><td colspan=2></td><td class=r data-c="tp2"></td><td colspan=2></td><td class=r data-c="tn2"></td></tr></table></div></div>`;
+ el.innerHTML=h;calcNego(el);autoGAll();setTimeout(autoGAll,80);
 }
+function negoSec(el){const i=+el.dataset.i;S.nego[i][el.dataset.k]=el.value;if(el.dataset.k=="t"){const c=nm();if(c)calcNego(c)}sv()}
+function negoAdd(i){const s=S.nego[i],last=s.items.filter(x=>!x.hd).slice(-1)[0]||{hp:.11,pp:.11,np:.11},o={u:"Uraian baru",v:1,s:"ls",h:0,hp:last.hp,p:0,pp:last.pp,n:0,np:last.np};
+ if(s.items.some(x=>x.no!=null)){const nums=s.items.map(x=>parseInt(x.no)).filter(x=>!isNaN(x));o.no=String((nums.length?Math.max(...nums):0)+1)}
+ s.items.push(o);renderNego(nm());sv()}
+function negoAddSec(){const lab=S.nego.some(x=>x.n!=null)?{n:"",lv:3}:{};S.nego.push({t:"BAGIAN BARU",...lab,items:[{u:"Uraian baru",v:1,s:"ls",h:0,hp:.11,p:0,pp:.11,n:0,np:.11}]});renderNego(nm());sv()}
 function calcNego(root){
  root=root||document;const set=(k,v)=>root.querySelectorAll(`[data-c="${k}"]`).forEach(e=>e.innerHTML=acc(v));
  const m=negoSum();
@@ -662,7 +721,7 @@ function calcNego(root){
  set("th",m.tot[0]);set("tp",m.tot[1]);set("tn",m.tot[2]);set("th2",m.tot[0]);set("tp2",m.tot[1]);set("tn2",m.tot[2]);
 }
 function negoIn(el){const i=+el.dataset.i,j=+el.dataset.j,k=el.dataset.k,it=S.nego[i].items[j];
- if(k=="u"||k=="s")it[k]=el.value;else{let v=el.classList.contains("money")?pn(el.value):parseFloat(el.value);if(isNaN(v))v=0;it[k]=(k=="hp"||k=="pp"||k=="np")?v/100:v}
+ if(k=="u"||k=="s")it[k]=el.value;else{let v=(el.classList.contains("money")||el.classList.contains("dec"))?pn(el.value):parseFloat(el.value);if(isNaN(v))v=0;it[k]=(k=="hp"||k=="pp"||k=="np")?v/100:v}
  calcNego(nm());sv()}
 /* sebelumnya calcNego() dipanggil tanpa root -> pakai root komponen supaya tidak salah sasaran */
 
@@ -671,9 +730,9 @@ document.addEventListener("pointerdown",e=>{
  const hd=e.target.closest&&e.target.closest("tr.rzr i");if(!hd)return;e.preventDefault();
  const t=hd.closest("table"),key=t.dataset.cw,ci=+hd.dataset.ci,cols=[...t.querySelectorAll("col")],w0=parseFloat(cols[ci].style.width),x0=e.clientX;
  hd.setPointerCapture(e.pointerId);hd.classList.add("on");
- const mv=ev=>{const w=Math.max(24,Math.round(w0+ev.clientX-x0));cols[ci].style.width=w+"px";t.style.width=cwSum(cols.map(c=>parseFloat(c.style.width)))+"px"};
+ const mv=ev=>{const w=Math.max(24,Math.round(w0+ev.clientX-x0));cols[ci].style.width=w+"px";t.style.width=cwSum(cols.map(c=>parseFloat(c.style.width)))+"px";document.querySelectorAll('table[data-cw="'+key+'"]').forEach(o=>{if(o!==t){const oc=o.querySelectorAll("col");if(oc[ci])oc[ci].style.width=w+"px";o.style.width=t.style.width}});autoGLater()};
  const up=()=>{hd.removeEventListener("pointermove",mv);hd.removeEventListener("pointerup",up);hd.removeEventListener("pointercancel",up);hd.classList.remove("on");
-  S.cw=S.cw||{};S.cw[key]=cols.map(c=>parseFloat(c.style.width));sv()};
+  const sc=(S.cws&&S.cws[key])||1;S.cw=S.cw||{};S.cw[key]=cols.map(c=>parseFloat(c.style.width)/sc);autoGAll();sv()};
  hd.addEventListener("pointermove",mv);hd.addEventListener("pointerup",up);hd.addEventListener("pointercancel",up);
 });
 document.addEventListener("dblclick",e=>{
@@ -931,7 +990,7 @@ function timSum(){let h=0,p=0;S.tim.forEach(x=>{if(x.k=="it"){h+=x.v*x.h;p+=x.v*
 function renderTim(el){
  S.cw=S.cw||{};const cw=cwGet("tim",TM_DEF);
  const mn=(i,k)=>`<div class=ai><span>Rp.</span><input class="nr money" data-ti=${i} data-tk=${k} value="${nf(S.tim[i][k])}" onfocus="monF(this)" onblur="monB(this)" oninput="timIn(this)"></div>`;
- let h=`<div class=nego>${rzHint}<div class=nscroll><table data-cw=tim style="width:${cwSum(cw)}px">${cwHtml(cw)}${rzRow(10,1)}
+ let h=`<div class=nego>${rzHintF("tim",0)}<div class=nscroll><table data-cw=tim style="width:${cwSum(cw)}px">${cwHtml(cw)}${rzRow(10,1)}
 <tr><th rowspan=2>No. Mata Pembayaran</th><th rowspan=2>Uraian</th><th rowspan=2>Perkiraan Kuantitas</th><th rowspan=2>Sat.</th><th colspan=2>Harga Perkiraan Sendiri (HPS)</th><th colspan=3>Harga Penawaran</th><th rowspan=2>Keterangan</th><td class=noprint style="border:0"></td></tr>
 <tr><th>Harga Satuan (Rp)</th><th>Jumlah Harga (Rp)</th><th>Harga Satuan (Rp)</th><th>Jumlah Harga (Rp)</th><th>Persen</th><td class=noprint style="border:0"></td></tr>`;
  S.tim.forEach((x,i)=>{
@@ -947,7 +1006,7 @@ function calcTim(root){root=root||document;const set=(k,v)=>root.querySelectorAl
   root.querySelectorAll(`[data-tc="pc.${i}"]`).forEach(e=>{e.textContent=pctF(x.p,x.h)});const tr=root.querySelector(`[data-trow="${i}"]`);if(tr)tr.classList.toggle("timp",pc>1.1)});
  ["jh","jp","ph","pp","th","tp","bh","bp"].forEach(k=>set(k,m[{jh:"h",jp:"p",ph:"ph",pp:"pp",th:"th",tp:"tp",bh:"bh",bp:"bp"}[k]]));
  const t=root.querySelector("#timTerb");if(t)t.innerHTML=`Terbilang penawaran (dibulatkan): <b>${E(terb(m.bp))}</b>`}
-function timIn(el){const i=+el.dataset.ti,k=el.dataset.tk,x=S.tim[i];if(["n","t","u","s","ket"].includes(k))x[k]=el.value;else{let v=el.classList.contains("money")?pn(el.value):parseFloat(el.value);x[k]=isNaN(v)?0:v}
+function timIn(el){const i=+el.dataset.ti,k=el.dataset.tk,x=S.tim[i];if(["n","t","u","s","ket"].includes(k))x[k]=el.value;else{let v=(el.classList.contains("money")||el.classList.contains("dec"))?pn(el.value):parseFloat(el.value);x[k]=isNaN(v)?0:v}
  calcTim(el.closest(".nego"));sv()}
 const tmc=()=>document.querySelector("[data-comp=tim]");
 function timAdd(i){let j=i+1;while(j<S.tim.length&&S.tim[j].k=="it")j++;const n=S.tim.slice(i+1,j).length+1;S.tim.splice(j,0,{k:"it",n:String(n),u:"Uraian baru",v:1,s:"ls",h:0,p:0});renderTim(tmc());sv()}
@@ -988,7 +1047,7 @@ function parseTSV(t){ /* tab-delimited dengan dukungan sel bertanda kutip (hasil
  return rows}
 const isNumS=s=>s!==""&&/^-?(rp\.?)?[\d.,]+%?$/i.test(s.replace(/[\s\u00a0]/g,""));
 const pjS=x=>{if(x===""||x==null)return .11;const v=pn(x);return /%/.test(x)?v/100:(v>1?v/100:v)};
-const noLikeS=s=>/^([IVXLC]+|[A-Z]|\d+(\.\d+)*)[.)]?$/i.test(s)&&s.length<=7;
+const noLikeS=s=>/^([IVXLC]+(\.\d+)*|[A-Z]|\d+(\.\d+)*)[.)]?$/i.test(s)&&s.length<=9;
 const isRomanS=s=>/^[IVXLC]+\.?$/i.test(s);
 const isTotRow=(no,u)=>/^(jumlah|total|ppn|rekap|pembulatan|dibulatkan|terbilang|sub\s?total|grand)/i.test(u)||/^(jumlah|total)/i.test(no);
 const isHdrRow=(no,u)=>/^no\.?$/i.test(no)||/^(no\.?\s*)?(mata\s*pembayaran\s*)?uraian/i.test(u)||/^no\.?(\s|$)/i.test(u);
@@ -1014,6 +1073,8 @@ const allCaps=u=>u===u.toUpperCase()&&/[A-Z]/.test(u);
 function fixPrice(v,h,pj,J){if(!(v>0)||!(J>0))return{h,adj:false,bad:false};const calc=v*h*(1+pj),d=Math.abs(J-calc);
  if(d<=0.011)return{h,adj:false,bad:false};if(d/J>0.01)return{h,adj:false,bad:true};return{h:J/(v*(1+pj)),adj:true,bad:false}}
 
+const romVal=t=>{const m={I:1,V:5,X:10,L:50,C:100};let tot=0,pv=0;[...t.toUpperCase().replace(/\.$/,"")].reverse().forEach(c=>{const v=m[c]||0;if(v<pv)tot-=v;else{tot+=v;pv=v}});return tot};
+const headingLike=no=>{no=(no||"").replace(/\.$/,"");return /^[IVXLC]+(\.\d+)*$/i.test(no)||/^[A-Z]$/i.test(no)};
 function parseNegoPaste(text,opt){opt=opt||{};
  const rows=rawRows(text);if(!rows)return{err:"Belum ada data."};
  const vi=volIdx(rows);if(vi<0)return{err:"Kolom Vol. tidak ditemukan. Pastikan blok yang disalin memuat kolom Vol. (angka) dan Uraian."};
@@ -1022,29 +1083,41 @@ function parseNegoPaste(text,opt){opt=opt||{};
  else if(w>=vi+11)G=[{h:vi+2,pj:vi+3,jm:vi+4},{h:vi+5,pj:vi+6,jm:vi+7},{h:vi+8,pj:vi+9,jm:vi+10}];
  else if(w>=vi+8)G=[{h:vi+2,pj:vi+3,jm:-1},{h:vi+4,pj:vi+5,jm:-1},{h:vi+6,pj:vi+7,jm:-1}];
  else return{err:`Kolom setelah Vol. kurang (${w-vi-1}). Salin sampai Jumlah Harga Negosiasi (Vol, Sat, lalu 3 kelompok Harga Satuan/Pajak/Jumlah).`};
- const out=[],skipped=[],tot={rows:0,hdr:0};let cur=null,prev=null,adj=0,bad=0,merged=0,lastGood=-1,done=false;const xl=[[],[],[]];
- rows.forEach((r,ri)=>{const{no,u}=leftParts(r,vi),lab=(no+" "+u).trim();
+ const out=[],skipped=[];let cur=null,prev=null,adj=0,bad=0,merged=0,lastGood=-1,done=false,nHd=0,lastRoman=0,lastLetter=0;const xl=[[],[],[]];
+ const newSec=(n,t,lv)=>{out.push(cur={t,n,lv,items:[]});prev=null};
+ const ensure=()=>{if(!cur)newSec("","PEKERJAAN",1)};
+ /* tingkat judul: I/II/III = BAB (1), II.1 = sub-bab (2), A/B/C = grup (3). Huruf yang juga angka romawi (C, D, I, L, V, X) dibedakan lewat urutan */
+ const hlevel=n=>{n=(n||"").replace(/\.$/,"");if(!n)return 0;
+  if(/^[IVXLC]+\.\d+(\.\d+)*$/i.test(n)){lastLetter=0;return 2}
+  if(/^[IVXLC]{2,}$/i.test(n)){lastRoman=romVal(n);lastLetter=0;return 1}
+  if(/^[A-Z]$/i.test(n)){const L=n.toUpperCase().charCodeAt(0)-64,isR="IVXLC".includes(n.toUpperCase());
+   if(isR&&romVal(n)==lastRoman+1&&L!=lastLetter+1){lastRoman=romVal(n);lastLetter=0;return 1}
+   lastLetter=L;return 3}
+  return 0};
+ rows.forEach((r,ri)=>{const{no,u}=leftParts(r,vi),lab=(no+" "+u).trim(),all=r.join(" ");
   if(done)return;
-  if((cur&&isHdrRow(no,u))||/rekapitulasi/i.test(r.join(" "))){if(cur&&cur.items.length||/rekapitulasi/i.test(r.join(" "))){done=true;return}}
-  if(isHdrRow(no,u)){tot.hdr++;return}
-  if(isTotRow(no,u)||(!u&&/(jumlah|total)/i.test(r.join(" "))&&r.some(isNumS))){lastGood=ri;tot.rows++;G.forEach((g,gi)=>{if(g.jm>=0&&isNumS(r[g.jm]))xl[gi].push(pn(r[g.jm]))});return}
+  if(/rekapitulasi/i.test(all)||(out.length&&isHdrRow(no,u))){done=true;return}
+  if(isHdrRow(no,u))return;
+  if(isTotRow(no,u)||(!u&&/(jumlah|total)/i.test(all)&&r.some(isNumS))){lastGood=ri;G.forEach((g,gi)=>{if(g.jm>=0&&isNumS(r[g.jm]))xl[gi].push(pn(r[g.jm]))});return}
   if(!lab&&r.every(c=>c===""||isNumS(c))&&!u){if(cur&&G.some(g=>g.jm>=0&&isNumS(r[g.jm]))){lastGood=ri;G.forEach((g,gi)=>{if(g.jm>=0&&isNumS(r[g.jm]))xl[gi].push(pn(r[g.jm]))});return}if(r.some(c=>c!==""))skipped.push({row:ri+1,t:r.filter(Boolean).join(" | ").slice(0,60),why:"angka tanpa uraian"});return}
-  const sat=r[vi+1],itemLike=u&&isNumS(r[vi])&&!(isRomanS(no)&&!sat)&&(sat!==""||/^\d/.test(no)||G.some(g=>isNumS(r[g.h])));
-  if(itemLike){
-   lastGood=ri;if(!cur){cur={t:"PEKERJAAN",items:[]};out.push(cur)}
+  const sat=r[vi+1],volNum=isNumS(r[vi]),hasPrice=G.some(g=>isNumS(r[g.h])&&pn(r[g.h])>0);
+  const itemLike=u&&volNum&&!(headingLike(no)&&!sat)&&(sat!==""||/^\d/.test(no)||hasPrice);
+  if(itemLike){lastGood=ri;ensure();
    const v=pn(r[vi]),it={u,v,s:sat,h:[0,0,0],pj:[0,0,0]};
    G.forEach((g,gi)=>{const pj=pjS(r[g.pj]);let h=pn(r[g.h]);
     if(opt.adjust&&g.jm>=0&&isNumS(r[g.jm])){const f=fixPrice(v,h,pj,pn(r[g.jm]));h=f.h;if(f.adj)adj++;if(f.bad){bad++;skipped.push({row:ri+1,t:lab.slice(0,50),why:`Jumlah kelompok ${gi+1} tidak cocok dengan Vol×Harga (kolom mungkin bergeser)`,soft:1})}}
     it.h[gi]=h;it.pj[gi]=pj});
    if(opt.fillN&&!it.h[2]&&it.h[1]){it.h[2]=it.h[1];it.pj[2]=it.pj[1]}
-   cur.items.push(prev={u:it.u,v:it.v,s:it.s,h:it.h[0],hp:it.pj[0],p:it.h[1],pp:it.pj[1],n:it.h[2],np:it.pj[2]})}
-  else if(u&&(isRomanS(no)||(/^[A-Z]\.?$/i.test(no))||(no===""&&allCaps(u))||rowEmptyFrom(r,vi)&&no!==""))out.push(cur={t:u,items:[]}),prev=null;
+   cur.items.push(prev={no,u:it.u,v:it.v,s:it.s,h:it.h[0],hp:it.pj[0],p:it.h[1],pp:it.pj[1],n:it.h[2],np:it.pj[2]})}
+  else if(u&&/^\d+$/.test(no)&&!volNum&&!hasPrice){lastGood=ri;ensure();nHd++;cur.items.push(prev={no,u,hd:1,v:0,s:"",h:0,hp:.11,p:0,pp:.11,n:0,np:.11})} /* baris induk (mis. "Pemasangan pintu …" dengan anak a, b, c) */
+  else if(u&&headingLike(no)){lastGood=ri;newSec(no.replace(/\.$/,""),u,hlevel(no)||3)}
+  else if(u&&no===""&&allCaps(u)&&rowEmptyFrom(r,vi)){lastGood=ri;newSec("",u,3)}
   else if(u&&no===""&&rowEmptyFrom(r,vi)&&prev){prev.u+=" "+u;merged++}
   else if(u||no)skipped.push({row:ri+1,t:lab.slice(0,50),why:"bukan baris pekerjaan/bagian"})});
- const data=out.filter(x=>x.items.length);
- if(!data.length)return{err:"Tidak ada baris pekerjaan yang terbaca (kolom Vol. harus berisi angka)."};
- const sum=[0,0,0];data.forEach(sc=>sc.items.forEach(i=>{sum[0]+=i.v*i.h*(1+i.hp);sum[1]+=i.v*i.p*(1+i.pp);sum[2]+=i.v*i.n*(1+i.np)}));
- return{data,sum,xl,adj,bad,merged,tot,skipped:skipped.filter(x=>x.row-1<=lastGood),nSec:data.length,nItem:data.reduce((a,x)=>a+x.items.length,0)}}
+ const nItem=out.reduce((a,x)=>a+x.items.filter(i=>!i.hd).length,0);
+ if(!nItem)return{err:"Tidak ada baris pekerjaan yang terbaca (kolom Vol. harus berisi angka)."};
+ const sum=[0,0,0];out.forEach(sc=>sc.items.forEach(i=>{sum[0]+=i.v*i.h*(1+i.hp);sum[1]+=i.v*i.p*(1+i.pp);sum[2]+=i.v*i.n*(1+i.np)}));
+ return{data:out,sum,xl,adj,bad,merged,nHd,skipped:skipped.filter(x=>x.row-1<=lastGood),nSec:out.length,nItem}}
 
 function parseTimPaste(text,opt){opt=opt||{};
  const rows=rawRows(text);if(!rows)return{err:"Belum ada data."};
@@ -1092,7 +1165,7 @@ function pdParse(){const t=document.getElementById("pd_t").value,f=document.getE
  if(r.err){s.innerHTML=msg(r.err);p.innerHTML="";ok.disabled=true;return}
  ok.disabled=false;
  const hard=r.skipped.filter(x=>!x.soft),soft=r.skipped.filter(x=>x.soft);
- let h=msg(`Terbaca <b>${r.nSec}</b> bagian dan <b>${r.nItem}</b> baris pekerjaan.${r.merged?` ${r.merged} baris lanjutan uraian digabung ke baris sebelumnya.`:""}${r.adj?` Harga satuan dari ${r.adj} sel disesuaikan dengan kolom Jumlah Excel (angka Excel tampil dibulatkan).`:""}`,"ok");
+ let h=msg(`Terbaca <b>${r.nSec}</b> judul/bagian (BAB, sub-bab, grup) dan <b>${r.nItem}</b> baris pekerjaan${r.nHd?` + ${r.nHd} baris induk`:""}.${r.merged?` ${r.merged} baris lanjutan uraian digabung ke baris sebelumnya.`:""}${r.adj?` Harga satuan dari ${r.adj} sel disesuaikan dengan kolom Jumlah Excel (angka Excel tampil dibulatkan).`:""}`,"ok");
  /* rekonsiliasi dengan baris TOTAL dari Excel (cocok bila salah satu baris total = hasil hitung) */
  const names=nego?["HPS","Penawaran","Negosiasi"]:["HPS (sebelum PPN)","Penawaran (sebelum PPN)"],ppn=(S.ppn==null?.11:S.ppn);
  const any=r.xl.some(a=>a.length);
@@ -1105,7 +1178,7 @@ function pdParse(){const t=document.getElementById("pd_t").value,f=document.getE
  if(soft.length)h+=`<details style="font-size:12.5px;margin:6px 0"><summary>${soft.length} peringatan angka</summary>${soft.map(x=>`Baris ${x.row}: ${E(x.t)} <i>(${x.why})</i>`).join("<br>")}</details>`;
  s.innerHTML=h;
  let rows="";
- if(nego)r.data.forEach(sec=>{rows+=`<tr class=sc><td colspan=6><b>${E(sec.t)}</b></td></tr>`;sec.items.forEach((it,j)=>rows+=`<tr><td>${j+1}. ${E(it.u)}</td><td class=r>${it.v}</td><td>${E(it.s)}</td><td class=r>${fm(it.h)}</td><td class=r>${fm(it.p)}</td><td class=r>${fm(it.n)}</td></tr>`)});
+ if(nego)r.data.forEach(sec=>{rows+=`<tr class=sc><td colspan=6 style="padding-left:${6+((sec.lv||1)-1)*14}px"><b>${E(sec.n)} ${E(sec.t)}</b></td></tr>`;sec.items.forEach((it,j)=>rows+=it.hd?`<tr><td colspan=6 style="padding-left:20px"><i>${E(it.no)} ${E(it.u)}</i></td></tr>`:`<tr><td style="padding-left:20px">${E(it.no!=null?it.no:j+1)} ${E(it.u)}</td><td class=r>${it.v}</td><td>${E(it.s)}</td><td class=r>${fm(it.h)}</td><td class=r>${fm(it.p)}</td><td class=r>${fm(it.n)}</td></tr>`)});
  else r.data.forEach(x=>rows+=x.k=="sec"?`<tr class=sc><td colspan=5><b>${E(x.n)} ${E(x.t)}</b></td></tr>`:`<tr><td>${E(x.n)} ${E(x.u)}</td><td class=r>${x.v}</td><td>${E(x.s)}</td><td class=r>${fm(x.h)}</td><td class=r>${fm(x.p)}</td></tr>`);
  p.innerHTML=`<table class=tb><tr>${nego?"<th>Uraian</th><th>Vol</th><th>Sat</th><th>Harga Sat. HPS</th><th>Harga Sat. Penawaran</th><th>Harga Sat. Nego</th>":"<th>Uraian</th><th>Qty</th><th>Sat</th><th>Harga Sat. HPS</th><th>Harga Sat. Penawaran</th>"}</tr>${rows}</table>`}
 function pdApply(){const r=PD.res;if(!r||r.err)return;const app=document.querySelector("input[name=pd_m]:checked").value=="append";
@@ -1124,15 +1197,17 @@ document.addEventListener("paste",e=>{
 const PL_P={NAV,STG,URUT,JV,LAND,FIELDS,DEF,DOC,CALC,FLD,NOFMT,TGL0,dkey:k=>JV[k]?k+":"+S.b.jenis:k,title:"Pengadaan Langsung",sub:"BPBJ Kota Surakarta · Pejabat Pengadaan",ls:"pl_",coll:"paket"};
 const TN_P={NAV:NAV_TN,STG:STG_TN,URUT:URUT_TN,JV:{"LAMP-REV":1},LAND:{"LAMP-T":1},FIELDS:FIELDS_TN,DEF:DEF_TN,DOC:DOC_TN,CALC:CALC_TN,FLD:FLD_TN,NOFMT:NOFMT_TN,TGL0:TGL_TN,dkey:dkeyTN,title:"Tender",sub:"BPBJ Kota Surakarta · Pokja Pemilihan",ls:"tn_",coll:"tender"};
 let MODE="PL",CURU=null;
-const mkTitles=()=>{TITLES={};NAV.forEach(([g,a])=>a.forEach(x=>TITLES[x[0]]=[x[1],g]));TITLES.admin=["Kelola Akun Pengguna","Administrator"];TITLES.akun=["Akun Saya","Akun"]};
+const mkTitles=()=>{TITLES={};NAV.forEach(([g,a])=>a.forEach(x=>TITLES[x[0]]=[x[1],g]));TITLES["DOK-PEM"]=["Dokumen Pemilihan","Pemilihan Penyedia"];TITLES.admin=["Kelola Akun Pengguna","Administrator"];TITLES.akun=["Akun Saya","Akun"]};
 const PROF=()=>MODE=="TN"?TN_P:PL_P;
-function freshS(P){const s={b:{...P.DEF},t:{},ed:{},cw:{}};
- for(const k in P.TGL0)s.t[k]={tgl:P.TGL0[k][0]||"",acara:P.TGL0[k][1]||"",jam:P.TGL0[k][2]||"",urut:P.URUT[k]||""};
- if(P===PL_P){s.nego=clone(DATA.NEGO);if(s.t.ABS)s.t.ABS.jam="11:00 WIB s/d Selesai"}else{s.pes=clone(TNX.pes);s.tim=clone(TNX.tim);s.ppn=.11;s.t.ABS.ac="Klarifikasi, Pembuktian Kualifikasi, dan Negosiasi"}
+/* Bank Data awal = kosong (kecuali pilihan dropdown -> opsi pertama) */
+function blankB(P){const b={};for(const k in P.DEF)b[k]="";P.FIELDS.forEach(([g,fs])=>fs.forEach(([k,l,ty])=>{if(ty&&ty.startsWith("sel:"))b[k]=ty.slice(4).split("|")[0];else if(ty&&ty.startsWith("selx:"))b[k]=ty.slice(5).split("|")[0]}));return b}
+function freshS(P){const s={b:blankB(P),t:{},ed:{},cw:{}};
+ for(const k of new Set([...P.STG,...Object.keys(P.TGL0)]))s.t[k]={tgl:"",acara:"",jam:"",urut:P.URUT[k]||""};
+ if(P===PL_P){s.nego=[]}else{s.pes=[];s.tim=[];s.ppn=.11}
  return s}
 function applyMode(m){const P=m=="TN"?TN_P:PL_P;MODE=m;NAV=P.NAV;STG=P.STG;URUT=P.URUT;JV=P.JV;LAND=P.LAND;FIELDS=P.FIELDS;DEF=P.DEF;DOC=P.DOC;CALC=P.CALC;FLD=P.FLD;NOFMT=P.NOFMT;dkey=P.dkey;mkTitles();S=freshS(P);tab="bank";CUR=""}
 const COLL=()=>PROF().coll,LSK=()=>PROF().ls+(CURU&&!AUTH?CURU.u+"_":"")+pid;
-function mergeState(d){S.b={...DEF,...d.b};for(const k in d.t)S.t[k]={...(S.t[k]||{}),...d.t[k]};Object.keys(d).forEach(k=>{if(k!="b"&&k!="t")S[k]=d[k]});S.ed=S.ed||{};S.cw=S.cw||{}}
+function mergeState(d){S.b={...blankB(PROF()),...d.b};for(const k in d.t)S.t[k]={...(S.t[k]||{}),...d.t[k]};Object.keys(d).forEach(k=>{if(k!="b"&&k!="t")S[k]=d[k]});S.ed=S.ed||{};S.cw=S.cw||{};for(const k in URUT){const t=S.t[k]||(S.t[k]={tgl:"",acara:"",jam:"",urut:""});if(!t.urut&&URUT[k])t.urut=URUT[k]}}
 function switchPid(v){pid=(v||"paket-1").trim()||"paket-1";S=freshS(PROF());load()}
 
 /* ---------- SHA-256 murni JS (jalan juga di file:// / http) ---------- */
@@ -1259,16 +1334,17 @@ async function chgPw(){if(AUTH)return FB.chgPw();const u=CURU,o=gv("a_old"),n=do
 function topbar(){const P=PROF(),pend=isAdmin()?Object.values(USERS).filter(u=>u.status=="pending"||u.resetReq).length:0;
  $("#top").innerHTML=`<button onclick="togSide()" title="Menu">☰</button><img class=lg src="${LOGO}" alt="Logo Pemerintah Kota Surakarta"><div class=tt><b>Kertas Kerja ${P.title}</b><small>${P.sub}</small></div><span class=sp></span>${INPROJ?`<span class=chip title="${E(S.b.paket)}">${E(S.b.spse)} · ${E(S.b.paket)}</span>`:""}<button onclick="go('akun')" title="Akun saya">👤 ${E(CURU?CURU.u:"")}</button>${isAdmin()?`<button onclick="go('admin')">🛡 Admin${pend?` <span class=tag warn style="background:#fef3c7;color:#92400e">${pend}</span>`:""}</button>`:""}<button onclick="toDash()" title="Kembali ke daftar proyek">◀ Dashboard</button><button onclick="togTheme()">${document.documentElement.dataset.theme=="dark"?"☀ Terang":"🌙 Gelap"}</button><button onclick="logout()">Keluar</button>`}
 function side(){if(!INPROJ){$("#side").innerHTML=`<div class=grp>Menu</div><button class=t onclick="toDash()"><span class=n>◀</span><span>Dashboard Proyek</span></button>${isAdmin()?`<button class="t ${tab=="admin"?"on":""}" onclick="go('admin')"><span class=n>🛡</span><span>Kelola Akun</span></button>`:""}<button class="t ${tab=="akun"?"on":""}" onclick="go('akun')"><span class=n>👤</span><span>Akun Saya</span></button>`;return}
- $("#side").innerHTML=NAV.map(([g,a])=>`<div class=grp>${g}</div>`+a.map(([k,l,n])=>`<button class="t ${n=="sub"?"sub":""} ${k==tab?"on":""}" onclick="go('${k}')">${n=="sub"?"↳":`<span class=n>${n}</span>`}<span>${l}</span></button>`).join("")).join("")+`<div class=foot><label>Proyek</label><div class=badge style="word-break:break-all">${PROF().title} · ${E(pid)}</div><div style="margin-top:8px" class=badge id=st>${AUTH?"Firebase aktif · data milik "+E(CURU.u):"Mode lokal (belum ada config Firebase)"}</div></div>`}
+ const GC=["#3b82f6","#14b8a6","#f59e0b","#8b5cf6","#ec4899","#22c55e"];
+ $("#side").innerHTML=NAV.map(([g,a],gi)=>{const c=GC[gi%GC.length];return `<div class=grp style="--gc:${c}">${g}</div>`+a.map(([k,l,n])=>`<button class="t ${n=="sub"?"sub":""} ${k==tab?"on":""}" style="--gc:${c}" onclick="go('${k}')">${n=="sub"?"↳":`<span class=n>${n}</span>`}<span>${l}</span></button>`).join("")}).join("")+`<div class=foot><label>Proyek</label><div class=pn id=sideProj>${E(S.b.paket||"(Belum ada nama paket)")}</div>${AUTH?"":`<div style="margin-top:8px" class=badge id=st>Mode lokal (belum ada config Firebase)</div>`}</div>`}
 function bank(){const b=S.b,TN=MODE=="TN";
- const field=([k,l,ty])=>k=="jenis"?`<div><label>Jenis Pengadaan</label><input value="${E(b.jenis)} — ${E(JENIS[b.jenis]||"")}" disabled style="background:var(--in);cursor:not-allowed;opacity:.85"><p class=badge style="margin:4px 0 0">🔒 Dipilih saat proyek dibuat — tidak dapat diubah.</p></div>`:ty&&ty.startsWith("sel")?`<div><label>${l}</label><select onchange="S.b.${k}=this.value;bchg()">${ty.slice(4).split("|").map(o=>`<option value="${o}" ${o==b[k]?"selected":""}>${JENIS[o]?o+" — "+JENIS[o]:o}</option>`).join("")}</select></div>`:ty=="area"?`<div style="grid-column:1/-1"><label>${l}</label><textarea rows=4 oninput="S.b.${k}=this.value;bchg()">${E(b[k])}</textarea></div>`:`<div><label>${l}</label><input ${ty=="num"?"type=number step=any":ty=="date"?"type=date":""} value="${E(b[k])}" oninput="S.b.${k}=${ty=="num"?"+this.value":"this.value"};bchg()"></div>`;
+ const field=([k,l,ty])=>k=="jenis"?`<div><label>Jenis Pengadaan</label><input value="${E(b.jenis)} — ${E(JENIS[b.jenis]||"")}" disabled style="background:var(--in);cursor:not-allowed;opacity:.85"><p class=badge style="margin:4px 0 0">🔒 Dipilih saat proyek dibuat — tidak dapat diubah.</p></div>`:k=="satker"?`<div id=satkerBox style="grid-column:1/-1">${satkerInner()}</div>`:ty&&ty.startsWith("selx:")?selxField(k,l,ty):ty&&ty.startsWith("sel")?`<div><label>${l}</label><select onchange="S.b.${k}=this.value;bchg()">${ty.slice(4).split("|").map(o=>`<option value="${o}" ${o==b[k]?"selected":""}>${JENIS[o]?o+" — "+JENIS[o]:o}</option>`).join("")}</select></div>`:ty=="area"?`<div style="grid-column:1/-1"><label>${l}</label><textarea rows=4 oninput="S.b.${k}=this.value;bchg()">${E(b[k])}</textarea></div>`:`<div><label>${l}</label><input ${ty=="num"?"type=number step=any":ty=="date"?"type=date":""} value="${E(b[k])}" oninput="S.b.${k}=${ty=="num"?"+this.value":"this.value"};bchg()"></div>`;
  const note=g=>/^Informasi Paket/.test(g)?`<p class=badge id=terbp>Terbilang Pagu: ${terb(b.pagu)}<br>Terbilang HPS: ${terb(b.hps)}</p><p class=badge>Template <b>Lampiran Reviu</b>${TN?"":" dan <b>BA Pembuktian Kualifikasi</b>"} mengikuti jenis pengadaan ini (sheet ${TN?"LAMP REVIU":"LDK / LAMPREVIU"}(${b.jenis}) di Excel).</p>`:"";
  return `<div class=crumb>Beranda / Data Paket</div><div class=ptitle><h2>Bank Data ${TN?"Tender":""}</h2><span class=badge id=st2>Tersimpan otomatis</span></div>`+
  FIELDS.map(([g,fs])=>`<div class=card><h3>${g}</h3><div class=bd><div class=grid>${fs.map(field).join("")}</div>${note(g)}</div></div>`).join("")+(TN?pesCard():"")+
- `<div class=card><h3>Dokumentasi ${TN?"Tender":"PL"} — Nomor & Tanggal Tahapan</h3><div class=bd style="overflow:auto"><table class=tb><tr><th>Tahapan</th><th>Urut</th><th>Tanggal</th><th>${TN?"Tgl Acara / Acara":"Tanggal Acara"}</th><th>Jam</th><th>Nomor Surat</th></tr>${STG.map(k=>{const t=S.t[k]||(S.t[k]={tgl:"",acara:"",jam:"",urut:""});
+ `<div class=card><h3>Dokumentasi ${TN?"Tender":"PL"} — Nomor & Tanggal Tahapan</h3><div class=bd style="overflow:auto"><table class=tb><tr><th>Tahapan</th><th>Urut</th><th>Tanggal</th><th>${TN?"Tgl Acara / Acara":"Tanggal Acara"}</th><th>Jam</th><th>Nomor Surat</th></tr>${STG.map(k=>{const t=S.t[k]||(S.t[k]={tgl:"",acara:"",jam:"",urut:URUT[k]||""});
   const ex=k=="UND-REV"?`<input type=date value="${t.acara}" oninput="S.t['${k}'].acara=this.value;bchg()">`:(TN&&k=="ABS")?`<input list=acaraL style="min-width:230px" value="${E(t.ac||"")}" oninput="S.t.ABS.ac=this.value;bchg()"><datalist id=acaraL><option value="Reviu Dokumen Persiapan Tender"><option value="Klarifikasi, Pembuktian Kualifikasi, dan Negosiasi"><option value="Pembukaan Penawaran"></datalist>`:"";
   return `<tr><td>${TITLES[k][0]}</td><td>${k in URUT?`<input style="width:56px" value="${E(t.urut)}" oninput="S.t['${k}'].urut=this.value;bchg()">`:""}</td><td><input type=date value="${t.tgl}" oninput="S.t['${k}'].tgl=this.value;bchg()" onchange="S.t['${k}'].tgl=this.value;bchg()"></td><td>${ex}</td><td><input value="${E(t.jam)}" oninput="S.t['${k}'].jam=this.value;bchg()"></td><td class=no id="no-${k}">${k in URUT?T(k).no:"—"}</td></tr>`}).join("")}</table></div></div>`}
-function bchg(){STG.forEach(k=>{const c=document.getElementById("no-"+k);if(c)c.textContent=(k in URUT)?T(k).no:"—"});const p=document.getElementById("terbp");if(p)p.innerHTML=`Terbilang Pagu: ${terb(S.b.pagu)}<br>Terbilang HPS: ${terb(S.b.hps)}`;const ch=document.querySelector("#top .chip");if(ch)ch.textContent=S.b.spse+" · "+S.b.paket;sv()}
+function bchg(){STG.forEach(k=>{const c=document.getElementById("no-"+k);if(c)c.textContent=(k in URUT)?T(k).no:"—"});const p=document.getElementById("terbp");if(p)p.innerHTML=`Terbilang Pagu: ${terb(S.b.pagu)}<br>Terbilang HPS: ${terb(S.b.hps)}`;const sp=document.getElementById("sideProj");if(sp)sp.textContent=S.b.paket||"(Belum ada nama paket)";const ch=document.querySelector("#top .chip");if(ch)ch.textContent=S.b.spse+" · "+S.b.paket;sv()}
 function render(){topbar();side();const m=$("#main");
  if(tab=="bank"){m.innerHTML=bank();return}
  if(tab=="admin"){m.innerHTML=adminView();if(AUTH)FB.adminRefresh();return}
@@ -1347,7 +1423,7 @@ function dashDraw(){
  a.innerHTML=`<div class=dwrap>
 <div class=dtop><img src="${LOGO}" alt="Logo"><div><b>Dashboard Proyek</b><small>Kertas Kerja Pengadaan · BPBJ Kota Surakarta · v4</small></div><span class=sp></span>
 <button class="btn o" onclick="openShell('akun')">👤 ${E(CURU.u)}</button>${isAdmin()?`<button class="btn o" onclick="openShell('admin')">🛡 Admin</button>`:""}<button class="btn o" onclick="logout()">Keluar</button></div>
-<div class=dstats><div class=st><small>Total Proyek</small><b>${all.length}</b></div><div class=st><small>Pengadaan Langsung</small><b>${pl}</b></div><div class=st><small>Tender</small><b>${tn}</b></div><div class=st><small>Total Nilai HPS</small><b style="font-size:17px">${rpS(hps)}</b></div><div class=st><small>Diubah 7 hari terakhir</small><b>${wk}</b></div><div class=st><small>Rata-rata kelengkapan data</small><b>${avg}%</b></div></div>
+<div class=dscroll><div class=dstats><div class=st><small>Total Proyek</small><b>${all.length}</b></div><div class=st><small>Pengadaan Langsung</small><b>${pl}</b></div><div class=st><small>Tender</small><b>${tn}</b></div><div class=st><small>Total Nilai HPS</small><b style="font-size:17px">${rpS(hps)}</b></div><div class=st><small>Diubah 7 hari terakhir</small><b>${wk}</b></div><div class=st><small>Rata-rata kelengkapan data</small><b>${avg}%</b></div></div>
 ${top.length?`<div class=dpanel><h3>Nilai HPS — 5 proyek terbesar</h3>${top.map(p=>`<div class=hb><span title="${E(p.name)}">${E(p.name)}</span><div><i class="${p.type}" style="width:${Math.max(2,(p.hps||0)/mx*100)}%"></i></div><em>${rpS(p.hps)}</em></div>`).join("")}</div>`:""}
 <div class=dbar><input id=dq placeholder="Cari nama paket / kode / satker…" value="${E(DF.q)}" oninput="DF.q=this.value;dashGrid()">
 <div class=chips>${[["","Semua"],["PL","Pengadaan Langsung"],["TN","Tender"]].map(([v,l])=>`<button class="chip ${DF.t==v?"on":""}" onclick="DF.t='${v}';dashDraw()">${l}</button>`).join("")}</div>
@@ -1356,7 +1432,7 @@ ${top.length?`<div class=dpanel><h3>Nilai HPS — 5 proyek terbesar</h3>${top.ma
 <div class=dbar><span class=lbl>Urutkan</span><select onchange="DF.s=this.value;dashGrid()"><option value=date ${DF.s=="date"?"selected":""}>Tanggal</option><option value=jenis ${DF.s=="jenis"?"selected":""}>Jenis Pengadaan (lalu tanggal)</option><option value=name ${DF.s=="name"?"selected":""}>Nama A–Z</option><option value=hps ${DF.s=="hps"?"selected":""}>Nilai HPS terbesar</option></select>
 <span class=lbl>Tanggal</span><select onchange="DF.d=this.value;dashGrid()"><option value=upd ${DF.d=="upd"?"selected":""}>Terakhir diubah</option><option value=tgl ${DF.d=="tgl"?"selected":""}>Tanggal paket (undangan)</option><option value=cr ${DF.d=="cr"?"selected":""}>Tanggal dibuat</option></select>
 <select onchange="DF.o=this.value;dashGrid()"><option value=desc ${DF.o=="desc"?"selected":""}>Terbaru → terlama</option><option value=asc ${DF.o=="asc"?"selected":""}>Terlama → terbaru</option></select></div>
-<div id=dgrid></div></div>`;
+<div id=dgrid></div></div></div>`;
  dashGrid()}
 function setView(v){DF.v=v;localStorage.setItem("kk_view",v);dashDraw()}
 function dashGrid(){const g=document.getElementById("dgrid");if(!g)return;const q=DF.q.toLowerCase();
@@ -1385,7 +1461,7 @@ function dashNew(){let d=document.getElementById("dmodal");if(d)d.remove();d=doc
 <label>Jenis Pengadaan</label><select id=np_j>${JNORD.map(j=>`<option value=${j}>${j} — ${JENIS[j]}</option>`).join("")}</select>
 <label>Nama paket pekerjaan</label><input id=np_n placeholder="mis. Rehabilitasi Jalan …" onkeydown="if(event.key=='Enter')createProject()"><div id=np_m></div>
 <div style="display:flex;gap:8px;margin-top:16px"><button class=btn onclick="createProject()">Buat &amp; Buka</button><button class="btn o" onclick="document.getElementById('dmodal').remove()">Batal</button></div>
-<p class=badge style="margin-top:10px">Proyek baru memakai data bawaan sebagai contoh isian — ubah di tab Bank Data.</p></div>`;
+<p class=badge style="margin-top:10px">Proyek baru dimulai dengan Bank Data kosong — isi datanya di tab Bank Data.</p></div>`;
  document.body.appendChild(d);setTimeout(()=>document.getElementById("np_n").focus(),30)}
 async function createProject(){const type=gv("np_t"),name=gv("np_n");if(!name)return document.getElementById("np_m").innerHTML=msg("Nama paket wajib diisi.");
  applyMode(type);pid="p"+Date.now().toString(36);S=freshS(PROF());S.b.paket=name;S.b.jenis=gv("np_j")||"PK";if(type=="TN")S.b.kegiatan=name;
@@ -1488,4 +1564,27 @@ const FB={
  if(s&&USERS[s.u]&&USERS[s.u].status=="active"&&!USERS[s.u].mustChange){CURU=USERS[s.u];showDash()}else showAuth("login",offl);
 })();
 
+</script><script>
+/* ---- Dropdown Satker (18 Satker Tunggal, 17 Satker Induk + OPD di bawahnya) ---- */
+const SK_T=["Sekretariat Daerah", "Sekretariat DPRD", "Inspektorat", "Dinas Pekerjaan Umum dan Penataan Ruang", "Dinas Sosial", "Satuan Polisi Pamong Praja", "Dinas Pemadam Kebakaran", "Dinas Kependudukan dan Pencatatan Sipil", "Dinas Komunikasi, Informatika, Statistik dan Persandian", "Dinas Tenaga Kerja", "Dinas Penanaman Modal dan Pelayanan Terpadu Satu Pintu", "Dinas Kepemudaan dan Olahraga", "Dinas Perpustakaan dan Kearsipan", "Badan Pendapatan Daerah", "Badan Perencanaan Pembangunan Daerah", "Badan Kepegawaian dan Pengembangan Sumber Daya Manusia", "Badan Penanggulangan Bencana Daerah", "Badan Kesatuan Bangsa dan Politik"];
+const SK_I={"Kecamatan Jebres": ["Kecamatan Jebres", "Kelurahan Sudiroprajan", "Kelurahan Gandekan", "Kelurahan Pucangsawit", "Kelurahan Jebres", "Kelurahan Mojosongo", "Kelurahan Purwodiningratan", "Kelurahan Tegalharjo", "Kelurahan Kepatihan Kulon", "Kelurahan Kepatihan Wetan", "Kelurahan Sewu", "Kelurahan Jagalan"], "Kecamatan Laweyan": ["Kecamatan Laweyan", "Kelurahan Penumping", "Kelurahan Sriwedari", "Kelurahan Purwosari", "Kelurahan Kerten", "Kelurahan Jajar", "Kelurahan Karangasem", "Kelurahan Pajang", "Kelurahan Sondakan", "Kelurahan Laweyan", "Kelurahan Bumi", "Kelurahan Panularan"], "Kecamatan Banjarsari": ["Kecamatan Banjarsari", "Kelurahan Keprabon", "Kelurahan Timuran", "Kelurahan Ketelan", "Kelurahan Punggawan", "Kelurahan Kestalan", "Kelurahan Gilingan", "Kelurahan Nusukan", "Kelurahan Kadipiro", "Kelurahan Banjarsari", "Kelurahan Joglo", "Kelurahan Banyuanyar", "Kelurahan Sumber", "Kelurahan Manahan", "Kelurahan Mangkubumen", "Kelurahan Setabelan"], "Kecamatan Pasarkliwon": ["Kecamatan Pasarkliwon", "Kelurahan Joyosuran", "Kelurahan Pasarkliwon", "Kelurahan Kauman", "Kelurahan Kampung Baru", "Kelurahan Kedung Lumbu", "Kelurahan Baluwarti", "Kelurahan Gajahan", "Kelurahan Semanggi", "Kelurahan Mojo", "Kelurahan Sangkrah"], "Kecamatan Serengan": ["Kecamatan Serengan", "Kelurahan Kemlayan", "Kelurahan Jayengan", "Kelurahan Kratonan", "Kelurahan Tipes", "Kelurahan Serengan", "Kelurahan Danukusuman", "Kelurahan Joyotakan"], "Dinas Pendidikan": ["Dinas Pendidikan", "SMP Negeri 1", "SMP Negeri 2", "SMP Negeri 3", "SMP Negeri 4", "SMP Negeri 5", "SMP Negeri 6", "SMP Negeri 7", "SMP Negeri 8", "SMP Negeri 9", "SMP Negeri 10", "SMP Negeri 11", "SMP Negeri 12", "SMP Negeri 13", "SMP Negeri 14", "SMP Negeri 15", "SMP Negeri 16", "SMP Negeri 17", "SMP Negeri 18", "SMP Negeri 19", "SMP Negeri 20", "SMP Negeri 21", "SMP Negeri 22", "SMP Negeri 23", "SMP Negeri 24", "SMP Negeri 25", "SMP Negeri 26", "SMP Negeri 27", "SPNF Sangar Kegiatan Belajar", "SMP Khusus Olah Raga", "UPTD Pusat Layanan Disabilitas dan Pendidikan Inklusi"], "Dinas Kesehatan": ["Dinas Kesehatan", "Puskesmas Pajang", "Puskesmas Penumping", "Puskesmas Purwosari", "Puskesmas Jayengan", "Puskesmas Kratonan", "Puskesmas Sangkrah", "Puskesmas Gajahan", "Puskesmas Purwodiningratan", "Puskesmas Ngoresan", "Puskesmas Sibela", "Puskesmas Pucangsawit", "Puskesmas Nusukan", "Puskesmas Manahan", "Puskesmas Gilingan", "Puskesmas Banyuanyar", "Puskesmas Setabelan", "Puskesmas Gambirsari", "UPTD. Laboratorium Kesehatan", "UPTD. Instalasi Farmasi", "RSUD Bung Karno", "RSUD Ibu Fatmawati Soekarno"], "Dinas Pemberdayaan Perempuan dan Pelindungan Anak serta Pengendalian Penduduk dan Keluarga Berencana": ["Dinas Pemberdayaan Perempuan dan Pelindungan Anak serta Pengendalian Penduduk dan Keluarga Berencana", "UPTD Perlindungan Perempuan dan Anak"], "Dinas Perhubungan": ["Dinas Perhubungan", "UPTD Transportasi", "UPTD Perparkiran"], "Dinas Kebudayaan dan Pariwisata": ["Dinas Kebudayaan dan Pariwisata", "UPTD Kawasan Wisata", "UPTD Museum"], "Dinas Perdagangan": ["Dinas Perdagangan", "UPTD Kawasan Metrologi Legal", "UPTD Pengelolaan PKL"], "Dinas Perumahan, dan Kawasan Permukiman serta Pertanahan": ["Dinas Perumahan, dan Kawasan Permukiman serta Pertanahan", "UPTD Rumah Sewa"], "Dinas Ketahanan Pangan dan Pertanian": ["Dinas Ketahanan Pangan dan Pertanian", "UPTD Aneka Usaha Perikanan", "UPTD Rumah Potong Hewan dan Pusat Kesehatan Hewan"], "Dinas Lingkungan Hidup": ["Dinas Lingkungan Hidup", "UPTD Pengelolaan Tempat Pembuangan Akhir Sampah"], "Dinas Koperasi Usaha Kecil dan Menengah dan Perindustrian": ["Dinas Koperasi Usaha Kecil dan Menengah dan Perindustrian", "UPTD Pengelolaan Sentra Industri Kecil Menengah"], "Badan Pengelolaan Keuangan dan Aset Daerah": ["Badan Pengelolaan Keuangan dan Aset Daerah", "UPTD Pengelolaan Aset Daerah"], "Badan Riset dan Inovasi Daerah": ["Badan Riset dan Inovasi Daerah", "UPTD Kawasan Sains dan Teknologi Solo Techno Park"]};
+function satkerFind(n){if(!n)return null;if(SK_T.includes(n))return{t:1};if(SK_I[n])return{i:n};for(const g in SK_I)if(SK_I[g].includes(n))return{i:g};return{x:1}}
+function satkerState(){const b=S.b,n=b.satker||"",gi=b.satkerInduk||"";
+ if(gi=="__x")return{g:"__x"};
+ if(gi&&SK_I[gi])return{g:gi,u:n};
+ const f=satkerFind(n);if(!f)return{g:""};if(f.t)return{g:n};if(f.i)return{g:f.i,u:n};return{g:"__x"}}
+function satkerInner(){const st=satkerState(),opt=(v,l,sel)=>`<option value="${E(v)}" ${sel?"selected":""}>${E(l||v)}</option>`,gs=Object.keys(SK_I);
+ const h1=`<select onchange="satkerPick1(this.value)"><option value="">— Pilih Satker —</option><optgroup label="Satker Tunggal (${SK_T.length})">${SK_T.map(x=>opt(x,x,st.g==x)).join("")}</optgroup><optgroup label="Satker Induk (${gs.length}) — punya OPD di bawahnya">${gs.map(x=>opt(x,x,st.g==x)).join("")}</optgroup><option value="__x" ${st.g=="__x"?"selected":""}>Lainnya (ketik sendiri)</option></select>`;
+ let h2="";
+ if(st.g&&st.g!="__x"&&SK_I[st.g])h2=`<div><label>OPD / unit di bawah satker induk</label><select onchange="satkerPick2(this.value)">${SK_I[st.g].map((x,i)=>opt(x,i==0?x+" (satker induk sendiri)":x,x==st.u)).join("")}</select></div>`;
+ else if(st.g=="__x")h2=`<div><label>Nama Satker (ketik sendiri)</label><input value="${E(S.b.satker)}" oninput="satkerTxt(this.value)" placeholder="Ketik nama satker…"></div>`;
+ return `<div class=skrow><div><label>Nama Satker — pilih Satker Tunggal / Satker Induk</label>${h1}</div>${h2}</div>`}
+function satkerRe(){const e=document.getElementById("satkerBox");if(e)e.innerHTML=satkerInner();bchg()}
+function satkerPick1(v){const b=S.b;if(!v){b.satker="";b.satkerInduk=""}else if(v=="__x"){b.satkerInduk="__x";b.satker=""}else if(SK_I[v]){b.satkerInduk=v;b.satker=v}else{b.satkerInduk="";b.satker=v}satkerRe()}
+function satkerPick2(v){S.b.satker=v;bchg()}
+function satkerTxt(v){S.b.satker=v;bchg()}
+/* ---- Dropdown dengan opsi "Lainnya (ketik sendiri)" ---- */
+function selxField(k,l,ty){const o=ty.slice(5).split("|"),cur=S.b[k]||"",oth=S.b[k+"_x"]||(cur&&!o.includes(cur));
+ return `<div><label>${l}</label><select onchange="selxPick('${k}',this.value)">${o.map(x=>`<option value="${E(x)}" ${!oth&&x==cur?"selected":""}>${E(x)}</option>`).join("")}<option value="__x" ${oth?"selected":""}>Lainnya (ketik sendiri)</option></select>${oth?`<input style="margin-top:6px" placeholder="Ketik sendiri…" value="${E(cur)}" oninput="S.b.${k}=this.value;bchg()">`:""}</div>`}
+function selxPick(k,v){if(v=="__x"){S.b[k+"_x"]=1;S.b[k]=""}else{S.b[k+"_x"]=0;S.b[k]=v}render();bchg()}
 </script></body></html>
